@@ -2,10 +2,19 @@ var mysql = require("mysql");
 const express = require("express");
 const path = require("path");
 const app = express();
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.set("view engine", "ejs");
 
 var conn = mysql.createConnection({
@@ -56,5 +65,5 @@ app.post("/signUp_user", function (req, res) {
     if (err) throw err;
     console.log("데이터 추가 성공");
   });
-  res.send("데이터 추가 성공");
+  res.redirect("/");
 });

@@ -51,7 +51,7 @@ app.get("/signUp", function (req, res) {
 app.post("/signUp_user", function (req, res) {
   console.log(req.body);
   let sql =
-    "INSERT INTO `bonggu`.`users` (`userId`, `password`, `name`, `email`, `address`, `phone_number`, `type`) VALUES (?, ?, ?, ?, ?, ?, ?);";
+    "INSERT INTO `users` (`id`, `password`, `name`, `email`, `address`, `phone_number`, `type`) VALUES (?, ?, ?, ?, ?, ?, ?);";
   let params = [
     req.body.userid,
     req.body.password,

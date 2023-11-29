@@ -38,3 +38,23 @@ app.get("/signIn", function (req, res) {
 app.get("/signUp", function (req, res) {
   res.render("signup.ejs");
 });
+
+app.post("/signUp_user", function (req, res) {
+  console.log(req.body);
+  let sql =
+    "INSERT INTO `bonggu`.`users` (`userId`, `password`, `name`, `email`, `address`, `phone_number`, `type`) VALUES (?, ?, ?, ?, ?, ?, ?);";
+  let params = [
+    req.body.userid,
+    req.body.password,
+    req.body.username,
+    req.body.email,
+    req.body.address,
+    req.body.phone,
+    "user",
+  ];
+  conn.query(sql, params, function (err, result) {
+    if (err) throw err;
+    console.log("데이터 추가 성공");
+  });
+  res.send("데이터 추가 성공");
+});

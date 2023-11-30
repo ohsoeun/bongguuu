@@ -2,12 +2,12 @@ var mysql = require("mysql");
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
+const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const crypto = require("crypto");
 const app = express();
 
-const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(
@@ -32,7 +32,7 @@ app.use(checkLoginStatus);
 var conn = mysql.createConnection({
   host: "localhost",
   user: "root", // user
-  password: "0531", // 비밀번호
+  password: "1234", // 비밀번호
   database: "bonggu", // db명
 });
 

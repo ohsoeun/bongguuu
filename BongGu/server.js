@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const crypto = require("crypto");
+const fs = require("fs");
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -46,11 +47,54 @@ app.get("/", function (req, res) {
   const user = res.locals.loggedInUser;
   console.log(user);
 
-  let sql = "select * from books";
-  conn.query(sql, function (err, rows, fields) {
+  let sql = "SELECT * FROM books";
+  conn.query(sql, function (err, rows) {
     if (err) throw err;
-    console.log(rows);
+
+    rows.forEach((row) => {
+      const imagePath = path.join(
+        __dirname,
+        "public",
+        "ex_photo",
+        row.preview_image_uri,
+      );
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString("base64");
+
+      row.preview_image = base64Image;
+    });
+
     res.render("index.ejs", { data: rows, user: user });
+  });
+});
+
+app.get("/content/:id", function (req, res) {
+  const bookId = req.params.id;
+
+  let sql = "SELECT * FROM books WHERE id = ?";
+  let params = [bookId];
+
+  conn.query(sql, params, function (err, result) {
+    if (err) throw err;
+
+    if (result.length > 0) {
+      const bookInfo = result[0];
+
+      const imagePath = path.join(
+        __dirname,
+        "public",
+        "ex_photo",
+        bookInfo.detailed_image_uri,
+      );
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString("base64");
+
+      bookInfo.detail_image = base64Image;
+
+      res.render("content.ejs", { book: bookInfo });
+    } else {
+      res.status(404).send("Book not found");
+    }
   });
 });
 

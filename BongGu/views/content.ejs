@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title></title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <%- include('nav.html') %>
+
+    <h1><%= book.title %> 상세 정보</h1>
+    <img
+      src="data:image/jpeg;base64,<%= book.detail_image %>"
+      alt="<%= book.title %> Preview"
+    />
+    <p>저자: <%= book.author %></p>
+    <p>상세정보: <%= book.summary %></p>
+    <p>종류: <%= book.type %></p>
+    <p>남은 수량: <%= book.remaining_quantity %></p>
+    <p>가격: <%= book.price %>원</p>
+
+    <footer></footer>
+    <script src="/js/script.js" defer></script>
+  </body>
+</html>

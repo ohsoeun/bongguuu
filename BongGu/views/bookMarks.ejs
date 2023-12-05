@@ -1,0 +1,59 @@
+<!-- bookMarks.ejs -->
+
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>장바구니</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <%- include('nav.html') %>
+    <h1>장바구니</h1>
+
+    <form id="purchaseForm">
+      <section class="products">
+        <% data.forEach((bookmark) => { %>
+        <div class="bookmark">
+          <!-- Add a checkbox for each item -->
+          <input
+            type="checkbox"
+            name="selectedItems"
+            value="<%= bookmark.details.id %>"
+          />
+          <h2><%= bookmark.details.title %></h2>
+          <p>저자: <%= bookmark.details.author %></p>
+          <img
+            src="/ex_photo/<%= bookmark.details.preview_image_uri %>"
+            alt="<%= bookmark.details.title %> Preview"
+          />
+          <p>가격: <%= bookmark.details.price %>원</p>
+          <p>남은 수량: <%= bookmark.details.remaining_quantity %></p>
+        </div>
+        <% }); %>
+      </section>
+
+      <!-- Add a purchase button -->
+      <button type="button" id="purchaseButton">선택한 상품 구매하기</button>
+    </form>
+
+    <footer></footer>
+    <script src="/js/script.js" defer></script>
+    <script>
+      // Add a JavaScript function for handling the purchase action
+      document
+        .getElementById("purchaseButton")
+        .addEventListener("click", function () {
+          const selectedItems = Array.from(
+            document.querySelectorAll('input[name="selectedItems"]:checked'),
+          ).map((checkbox) => checkbox.value);
+
+          // Send the selected item IDs to the server for purchase
+          // Implement an AJAX request or another method to send the data to the server
+          console.log("Selected items:", selectedItems);
+          // Example AJAX request
+          // ...
+        });
+    </script>
+  </body>
+</html>

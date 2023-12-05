@@ -10,6 +10,7 @@ const fs = require("fs");
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.static("public"));
 app.use(
   cors({
@@ -64,7 +65,7 @@ app.get("/", function (req, res) {
       row.preview_image = base64Image;
     });
 
-    res.render("index.ejs", { data: rows, user: user });
+    res.render("index.ejs", { data: rows, userName: user });
   });
 });
 
@@ -91,7 +92,10 @@ app.get("/content/:id", function (req, res) {
 
       bookInfo.detail_image = base64Image;
 
-      res.render("content.ejs", { book: bookInfo });
+      res.render("content.ejs", {
+        book: bookInfo,
+        userName: res.locals.loggedInUser.name,
+      });
     } else {
       res.status(404).send("Book not found");
     }
@@ -104,6 +108,70 @@ app.get("/login", function (req, res) {
 
 app.get("/signup", function (req, res) {
   res.render("signup.ejs");
+});
+
+app.get("/bookMarks", function (req, res) {
+  const user = res.locals.loggedInUser;
+
+  if (user) {
+    let bookmarksSql = "SELECT * FROM bonggu.bookmarks WHERE user_id = ?";
+    let bookmarksParams = [user.id];
+
+    conn.query(bookmarksSql, bookmarksParams, function (err, bookmarksResults) {
+      if (err) {
+        console.error("Error fetching bookmarks:", err);
+        res.status(500).send("Internal Server Error");
+      } else {
+        console.log(bookmarksResults);
+        // Create an array to store details for each bookmark
+        let bookmarkDetails = [];
+
+        // Loop through each bookmark result
+        bookmarksResults.forEach((bookmark) => {
+          // Determine the type of bookmark (book, goods, workshop)
+          let typeSql, typeParams;
+          if (bookmark.type === "book") {
+            typeSql = "SELECT * FROM bonggu.books WHERE id = ?";
+          } else if (bookmark.type === "goods") {
+            typeSql = "SELECT * FROM bonggu.goods WHERE id = ?";
+          } else if (bookmark.type === "workshop") {
+            typeSql = "SELECT * FROM bonggu.workshops WHERE id = ?";
+          }
+
+          // Fetch details based on type
+          typeParams = [bookmark.product_id];
+
+          conn.query(typeSql, typeParams, function (err, typeResults) {
+            if (err) {
+              console.error(
+                `Error fetching details for type ${bookmark.type}:`,
+                err,
+              );
+            } else {
+              // Add the details to the array
+              bookmarkDetails.push({
+                bookmark: bookmark,
+                details: typeResults[0], // Assuming there is only one result
+              });
+
+              // If all bookmarks have been processed, render the page
+              if (bookmarkDetails.length === bookmarksResults.length) {
+                console.log(bookmarkDetails);
+                res.render("bookMarks.ejs", {
+                  user: user.name,
+                  data: bookmarkDetails,
+                });
+              }
+            }
+          });
+        });
+      }
+    });
+  } else {
+    res.send(
+      '<script>alert("로그인이 필요합니다."); window.location.href = "/login";</script>',
+    );
+  }
 });
 
 app.post("/signup_server", function (req, res) {
@@ -147,6 +215,44 @@ app.post("/signin_server", function (req, res) {
     } else {
       console.log("로그인 실패");
       res.send("login failed");
+    }
+  });
+});
+
+app.post("/bookmark", function (req, res) {
+  const userId = res.locals.loggedInUser.id;
+  const productId = req.body.productId;
+  const registrationDate = req.body.registrationDate;
+  const type = req.body.type;
+
+  let checkExistenceSql =
+    "SELECT * FROM `bonggu`.`bookmarks` WHERE `user_id` = ? AND `product_id` = ? AND `type` = ?;";
+
+  let checkExistenceParams = [userId, productId, type];
+
+  conn.query(checkExistenceSql, checkExistenceParams, function (err, results) {
+    if (err) {
+      console.error("Error checking bookmark existence:", err);
+      res.status(500).send("Internal Server Error");
+    } else {
+      if (results.length > 0) {
+        res.status(400).send("이미 장바구니에 있는 상품입니다.");
+      } else {
+        // If the bookmark doesn't exist, insert a new record
+        let insertSql =
+          "INSERT INTO `bonggu`.`bookmarks` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (?, ?, ?, ?);";
+
+        let insertParams = [userId, productId, registrationDate, type];
+
+        conn.query(insertSql, insertParams, function (err, result) {
+          if (err) {
+            console.error("Error inserting bookmark:", err);
+            res.status(500).send("Internal Server Error");
+          } else {
+            res.status(200).send("Book marked successfully");
+          }
+        });
+      }
     }
   });
 });

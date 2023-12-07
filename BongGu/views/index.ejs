@@ -9,7 +9,7 @@
     <%- include('nav.html') %>
 
     <section class="products">
-      <div class="product">
+      <!--   <div class="product">
         <img src="/ex_photo/product1.jpg" alt="Product 1 Preview" />
         <h3>상품 제목 1</h3>
         <p>가격: $19.99</p>
@@ -103,11 +103,11 @@
         <img src="ex_photo/product16.jpg" alt="Product 6 Preview" />
         <h3>상품 제목 16</h3>
         <p>가격: $69.99</p>
-      </div>
+      </div> -->
 
       <% for (let i = 0; i < data.length; i++) { %>
       <div class="product">
-        <a href="/content/<%= data[i].id %>">
+        <a href="/content/<%= data[i].id %>/<%= data[i].product_type %>">
           <img
             src="data:image/jpeg;base64,<%= data[i].preview_image %>"
             alt="<%= data[i].title %> Preview"

@@ -15,7 +15,7 @@
 <!-- Navigation Start -->
 <nav>
   <div class="menu">
-    <a href="#">Books</a>
+    <a href="/">Books</a>
     <div class="submenu">
       <a href="#">에세이 | 소설 | 문학</a>
       <a href="#">디자인 | 문화 | 예술</a>
@@ -26,7 +26,7 @@
   </div>
 
   <div class="menu">
-    <a href="#">Goods</a>
+    <a href="/goods">Goods</a>
     <div class="submenu">
       <a href="#">스티커 | 뱃지 | 포스터</a>
       <a href="#">달력</a>
@@ -36,7 +36,7 @@
   </div>
 
   <div class="menu">
-    <a href="#">Workshop</a>
+    <a href="/workshops">Workshop</a>
     <div class="submenu"></div>
   </div>
 
@@ -46,7 +46,13 @@
   </div>
 
   <div class="search-container">
-    <input type="text" placeholder="검색어를 입력하세요..." />
-    <button type="button">검색</button>
+    <form action="/search" method="post">
+      <input
+        type="text"
+        name="searchTerm"
+        placeholder="검색어를 입력하세요..."
+      />
+      <button type="submit">검색</button>
+    </form>
   </div>
 </nav>

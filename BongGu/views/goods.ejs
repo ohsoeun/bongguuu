@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title></title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <%- include('nav.html') %>
+
+    <section class="products">
+      <% for (let i = 0; i < data.length; i++) { %>
+      <div class="product">
+        <a href="/content/<%= data[i].id %>/<%= data[i].product_type %>">
+          <img
+            src="data:image/jpeg;base64,<%= data[i].preview_image %>"
+            alt="<%= data[i].title %> Preview"
+          />
+          <h3><%= data[i].title %></h3>
+          <p>가격: <%= data[i].price %>원</p>
+        </a>
+      </div>
+      <% } %>
+    </section>
+    <footer></footer>
+    <script src="/js/script.js" defer></script>
+  </body>
+</html>

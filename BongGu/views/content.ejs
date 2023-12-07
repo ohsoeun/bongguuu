@@ -8,16 +8,16 @@
   <body>
     <%- include('nav.html') %>
 
-    <h1><%= book.title %> 상세 정보</h1>
+    <h1><%= product.title %> 상세 정보</h1>
     <img
-      src="data:image/jpeg;base64,<%= book.detail_image %>"
-      alt="<%= book.title %> Preview"
+      src="data:image/jpeg;base64,<%= product.detail_image %>"
+      alt="<%= product.title %> Preview"
     />
-    <p>저자: <%= book.author %></p>
-    <p>상세정보: <%= book.summary %></p>
-    <p>종류: <%= book.type %></p>
-    <p>남은 수량: <%= book.remaining_quantity %></p>
-    <p>가격: <%= book.price %>원</p>
+    <p>저자: <%= product.author %></p>
+    <p>상세정보: <%= product.summary %></p>
+    <p>종류: <%= product.type %></p>
+    <p>남은 수량: <%= product.remaining_quantity %></p>
+    <p>가격: <%= product.price %>원</p>
 
     <button id="addBookMarkBtn">구매하기</button>
 
@@ -31,13 +31,13 @@
 
       function addBookMark() {
         if (user) {
-          const productId = "<%= book.id %>";
+          const productId = "<%= product.id %>";
           const currentDate = new Date();
           const year = currentDate.getFullYear();
           const month = String(currentDate.getMonth() + 1).padStart(2, "0");
           const day = String(currentDate.getDate()).padStart(2, "0");
           const registrationDate = `${year}-${month}-${day}`;
-          const type = "book";
+          const type = "<%= product.product_type %>";
           const xhr = new XMLHttpRequest();
 
           xhr.open("POST", "/bookmark", true);

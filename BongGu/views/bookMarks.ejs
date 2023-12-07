@@ -14,12 +14,12 @@
     <form id="purchaseForm">
       <section class="products">
         <% data.forEach((bookmark) => { %>
-        <div class="bookmark">
-          <!-- Add a checkbox for each item -->
+        <label class="product">
           <input
             type="checkbox"
             name="selectedItems"
-            value="<%= bookmark.details.id %>"
+            value="<%= bookmark.bookmark.id %>"
+            data-type="<%= bookmark.bookmark.type %>"
           />
           <h2><%= bookmark.details.title %></h2>
           <p>저자: <%= bookmark.details.author %></p>
@@ -29,30 +29,55 @@
           />
           <p>가격: <%= bookmark.details.price %>원</p>
           <p>남은 수량: <%= bookmark.details.remaining_quantity %></p>
-        </div>
+        </label>
         <% }); %>
       </section>
-
-      <!-- Add a purchase button -->
       <button type="button" id="purchaseButton">선택한 상품 구매하기</button>
     </form>
 
     <footer></footer>
     <script src="/js/script.js" defer></script>
     <script>
-      // Add a JavaScript function for handling the purchase action
       document
         .getElementById("purchaseButton")
         .addEventListener("click", function () {
           const selectedItems = Array.from(
             document.querySelectorAll('input[name="selectedItems"]:checked'),
-          ).map((checkbox) => checkbox.value);
+          ).map((checkbox) => {
+            return {
+              id: checkbox.value,
+              type: checkbox.dataset.type,
+            };
+          });
 
-          // Send the selected item IDs to the server for purchase
-          // Implement an AJAX request or another method to send the data to the server
-          console.log("Selected items:", selectedItems);
-          // Example AJAX request
-          // ...
+          fetch("/purchase", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ selectedItems }),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              console.log("Server response:", data);
+              if (data.success) {
+                alert(data.message);
+              }
+              const selectedCheckboxes = document.querySelectorAll(
+                'input[name="selectedItems"]:checked',
+              );
+              selectedCheckboxes.forEach((checkbox) => {
+                checkbox.closest(".product").remove();
+              });
+            })
+            .catch((error) => {
+              console.error("Error during fetch operation:", error);
+            });
         });
     </script>
   </body>

@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
   const headerLinks = document.querySelector(".header-links");
-  const loginButton = document.querySelector('.header-links a[href="#로그인"]');
+  const loginButton = document.querySelector('.header-links a[href="/login"]');
 
   loginButton.addEventListener("click", function (e) {
     e.preventDefault();

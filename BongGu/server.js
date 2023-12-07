@@ -46,7 +46,6 @@ app.listen(8080, function () {
 
 app.get("/", function (req, res) {
   const user = res.locals.loggedInUser;
-  console.log(user);
 
   let sql = "SELECT * FROM books";
   conn.query(sql, function (err, rows) {
@@ -69,32 +68,81 @@ app.get("/", function (req, res) {
   });
 });
 
-app.get("/content/:id", function (req, res) {
-  const bookId = req.params.id;
+app.get("/goods", function (req, res) {
+  const user = res.locals.loggedInUser;
 
-  let sql = "SELECT * FROM books WHERE id = ?";
-  let params = [bookId];
+  let sql = "SELECT * FROM goods";
+  conn.query(sql, function (err, rows) {
+    if (err) throw err;
+
+    rows.forEach((row) => {
+      const imagePath = path.join(
+        __dirname,
+        "public",
+        "ex_photo",
+        row.preview_image_uri,
+      );
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString("base64");
+
+      row.preview_image = base64Image;
+    });
+
+    res.render("index.ejs", { data: rows, userName: user });
+  });
+});
+
+app.get("/workshops", function (req, res) {
+  const user = res.locals.loggedInUser;
+
+  let sql = "SELECT * FROM workshops";
+  conn.query(sql, function (err, rows) {
+    if (err) throw err;
+
+    rows.forEach((row) => {
+      const imagePath = path.join(
+        __dirname,
+        "public",
+        "ex_photo",
+        row.preview_image_uri,
+      );
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString("base64");
+
+      row.preview_image = base64Image;
+    });
+
+    res.render("index.ejs", { data: rows, userName: user });
+  });
+});
+
+app.get("/content/:id/:product_type", function (req, res) {
+  const productId = req.params.id;
+  const productType = req.params.product_type;
+
+  let sql = `SELECT * FROM ${productType} WHERE id = ?`;
+  let params = [productId];
 
   conn.query(sql, params, function (err, result) {
     if (err) throw err;
 
     if (result.length > 0) {
-      const bookInfo = result[0];
+      const productInfo = result[0];
 
       const imagePath = path.join(
         __dirname,
         "public",
         "ex_photo",
-        bookInfo.detailed_image_uri,
+        productInfo.detailed_image_uri,
       );
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
 
-      bookInfo.detail_image = base64Image;
+      productInfo.detail_image = base64Image;
 
       res.render("content.ejs", {
-        book: bookInfo,
-        userName: res.locals.loggedInUser.name,
+        product: productInfo,
+        userName: res.locals.loggedInUser,
       });
     } else {
       res.status(404).send("Book not found");
@@ -122,23 +170,16 @@ app.get("/bookMarks", function (req, res) {
         console.error("Error fetching bookmarks:", err);
         res.status(500).send("Internal Server Error");
       } else {
-        console.log(bookmarksResults);
-        // Create an array to store details for each bookmark
         let bookmarkDetails = [];
+        if (bookmarksResults.length === 0) {
+          res.send(
+            '<script>alert("장바구니에 등록된 상품이 없습니다."); window.location.href = "/";</script>',
+          );
+        }
 
-        // Loop through each bookmark result
         bookmarksResults.forEach((bookmark) => {
-          // Determine the type of bookmark (book, goods, workshop)
           let typeSql, typeParams;
-          if (bookmark.type === "book") {
-            typeSql = "SELECT * FROM bonggu.books WHERE id = ?";
-          } else if (bookmark.type === "goods") {
-            typeSql = "SELECT * FROM bonggu.goods WHERE id = ?";
-          } else if (bookmark.type === "workshop") {
-            typeSql = "SELECT * FROM bonggu.workshops WHERE id = ?";
-          }
-
-          // Fetch details based on type
+          typeSql = `SELECT * FROM bonggu.${bookmark.type} WHERE id = ?`;
           typeParams = [bookmark.product_id];
 
           conn.query(typeSql, typeParams, function (err, typeResults) {
@@ -148,15 +189,12 @@ app.get("/bookMarks", function (req, res) {
                 err,
               );
             } else {
-              // Add the details to the array
               bookmarkDetails.push({
                 bookmark: bookmark,
-                details: typeResults[0], // Assuming there is only one result
+                details: typeResults[0],
               });
 
-              // If all bookmarks have been processed, render the page
               if (bookmarkDetails.length === bookmarksResults.length) {
-                console.log(bookmarkDetails);
                 res.render("bookMarks.ejs", {
                   user: user.name,
                   data: bookmarkDetails,
@@ -175,7 +213,6 @@ app.get("/bookMarks", function (req, res) {
 });
 
 app.post("/signup_server", function (req, res) {
-  console.log(req.body);
   let sql =
     "INSERT INTO `users` (`id`, `password`, `name`, `email`, `address`, `phone_number`, `type`) VALUES (?, ?, ?, ?, ?, ?, ?);";
   let params = [
@@ -195,7 +232,6 @@ app.post("/signup_server", function (req, res) {
 });
 
 app.post("/signin_server", function (req, res) {
-  console.log(req.body);
   const id = req.body.userid;
   const password = req.body.password;
 
@@ -210,7 +246,6 @@ app.post("/signin_server", function (req, res) {
       console.log(result);
       const name = result[0].name;
       req.session.user = { id, name };
-      // res.send("login success");
       res.redirect("/");
     } else {
       console.log("로그인 실패");
@@ -238,7 +273,6 @@ app.post("/bookmark", function (req, res) {
       if (results.length > 0) {
         res.status(400).send("이미 장바구니에 있는 상품입니다.");
       } else {
-        // If the bookmark doesn't exist, insert a new record
         let insertSql =
           "INSERT INTO `bonggu`.`bookmarks` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (?, ?, ?, ?);";
 
@@ -254,6 +288,137 @@ app.post("/bookmark", function (req, res) {
         });
       }
     }
+  });
+});
+
+const updatePurchaseHistory = async (userId, productId, type) => {
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+  const day = String(currentDate.getDate()).padStart(2, "0");
+  const purchaseDate = `${year}-${month}-${day}`;
+
+  const insertHistorySql =
+    "INSERT INTO `bonggu`.`purchase_history` (`user_id`, `product_id`, `purchase_date`, `type`) VALUES (?, ?, ?, ?);";
+
+  const insertHistoryParams = [userId, productId, purchaseDate, type];
+
+  await new Promise((resolve, reject) => {
+    conn.query(insertHistorySql, insertHistoryParams, function (err) {
+      if (err) {
+        console.error("Error inserting into purchase_history:", err);
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+const updateQuantity = async (item) => {
+  // Update quantity
+  const updateQuantitySql = `UPDATE bonggu.${item.type} SET remaining_quantity = remaining_quantity - 1 WHERE id = ?;`;
+
+  await new Promise((resolve, reject) => {
+    conn.query(updateQuantitySql, [item.id], function (err) {
+      if (err) {
+        console.error(`Error updating ${item.type} quantity:`, err);
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+app.post("/purchase", async function (req, res) {
+  const userId = res.locals.loggedInUser.id;
+  const selectedItems = req.body.selectedItems;
+
+  try {
+    for (const item of selectedItems) {
+      console.log("Selected item ID:", item.id);
+      console.log("Selected item type:", item.type);
+
+      // Check remaining quantity before processing the purchase
+      const checkQuantitySql = `SELECT remaining_quantity FROM bonggu.${item.type} WHERE id = ?;`;
+      const checkQuantityResult = await new Promise((resolve, reject) => {
+        conn.query(checkQuantitySql, [item.id], function (err, result) {
+          if (err) {
+            console.error(`Error checking ${item.type} quantity:`, err);
+            reject(err);
+          } else {
+            resolve(result[0] ? result[0].remaining_quantity : null);
+          }
+        });
+      });
+
+      if (checkQuantityResult <= 0) {
+        // Send a JSON response with a specific structure for alert handling on the client side
+        return res.status(400).json({
+          success: false,
+          alertMessage: "상품의 남은 수량이 없습니다.",
+        });
+      }
+
+      // Update purchase history
+      await updatePurchaseHistory(userId, item.id, item.type);
+
+      // Delete bookmark
+      const deleteBookmarkSql = "DELETE FROM bonggu.bookmarks WHERE id = ?;";
+      await new Promise((resolve, reject) => {
+        conn.query(deleteBookmarkSql, [item.id], function (err) {
+          if (err) {
+            console.error("Error deleting bookmark:", err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+
+      // Update quantity after processing each selected item
+      await updateQuantity(item);
+    }
+
+    // Send the success response after processing all selected items
+    res.json({ success: true, message: "구매가 완료되었습니다." });
+  } catch (error) {
+    console.error("Error processing selected items:", error);
+    res.status(500).json({ error: "Error processing selected items" });
+  }
+});
+
+app.post("/search", function (req, res) {
+  const searchTerm = req.body.searchTerm; // Assuming the input field has a 'name' attribute of 'searchTerm'
+  console.log(searchTerm);
+  // Perform your search logic using the searchTerm
+  // For example, you can use a LIKE query to search for titles that contain the searchTerm
+  const searchQuery = "SELECT * FROM bonggu.books WHERE title LIKE ?"; // Adjust based on your table structure
+
+  const searchResults = [];
+
+  // Execute the query with the search term
+  conn.query(searchQuery, [`%${searchTerm}%`], function (err, results) {
+    if (err) {
+      console.error("Error executing search query:", err);
+      return res.status(500).send("Internal Server Error");
+    }
+
+    // Process the search results
+    results.forEach((result) => {
+      // Customize this part based on your table structure
+      searchResults.push({
+        id: result.id,
+        preview_image: result.preview_image, // Assuming this column stores base64-encoded images
+        title: result.title,
+        price: result.price,
+        product_type: result.product_type,
+      });
+    });
+
+    // Render the searchResults.ejs template with the data
+    res.render("search.ejs", { searchTerm, data: searchResults });
   });
 });
 

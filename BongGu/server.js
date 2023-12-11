@@ -310,6 +310,133 @@ app.post("/bookmark", async function (req, res) {
   }
 });
 
+app.get("/books/:type", async function (req, res) {
+  const type = req.params.type;
+
+  let sql = "";
+  if (type == "essay") {
+    sql =
+      "SELECT * FROM books WHERE type = '에세이' OR type = '소설' OR type = '문학'";
+  } else if (type == "design") {
+    sql =
+      "SELECT * FROM books WHERE type = '디자인' OR type = '문화' OR type = '예술'";
+  } else if (type == "magazine") {
+    sql = "SELECT * FROM books WHERE type = '매거진'";
+  } else if (type == "picture") {
+    sql = "SELECT * FROM books WHERE type = '사진'";
+  } else if (type == "postcardBook") {
+    sql = "SELECT * FROM books WHERE type = '엽서북'";
+  }
+
+  try {
+    const result = await pool.request().query(sql);
+    const rows = result.recordset;
+
+    for (const row of rows) {
+      const imagePath = path.join(
+        __dirname,
+        "public",
+        "ex_photo",
+        row.preview_image_uri,
+      );
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString("base64");
+
+      row.preview_image = base64Image;
+    }
+
+    const user = res.locals.loggedInUser;
+    res.render("index.ejs", { data: rows, userName: user });
+  } catch (err) {
+    console.error("Error executing MSSQL query:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+app.get("/goods/:type", async function (req, res) {
+  const type = req.params.type;
+
+  let sql = "";
+  if (type == "sticker") {
+    sql =
+      "SELECT * FROM goods WHERE type = '스티커' OR type = '뱃지' OR type = '포스터'";
+  } else if (type == "calendar") {
+    sql = "SELECT * FROM goods WHERE type = '달력'";
+  } else if (type == "notePaper") {
+    sql =
+      "SELECT * FROM goods WHERE type = '메모지' OR type = '노트' OR type = '엽서'";
+  } else if (type == "pen") {
+    sql = "SELECT * FROM goods WHERE type = '펜' OR type = '티셔츠'";
+  }
+
+  try {
+    const result = await pool.request().query(sql);
+    const rows = result.recordset;
+
+    for (const row of rows) {
+      const imagePath = path.join(
+        __dirname,
+        "public",
+        "ex_photo",
+        row.preview_image_uri,
+      );
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString("base64");
+
+      row.preview_image = base64Image;
+    }
+
+    const user = res.locals.loggedInUser;
+    res.render("index.ejs", { data: rows, userName: user });
+  } catch (err) {
+    console.error("Error executing MSSQL query:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// app.get("/workshops/:type", async function (req, res) {
+//   const type = req.params.type;
+
+//   let sql = "";
+//   if (type == "essay") {
+//     sql =
+//       "SELECT * FROM workshops WHERE type = '에세이' OR type = '소설' OR type = '문학'";
+//   } else if (type == "design") {
+//     sql =
+//       "SELECT * FROM workshops WHERE type = '디자인' OR type = '문화' OR type = '예술'";
+//   } else if (type == "magazine") {
+//     sql = "SELECT * FROM workshops WHERE type = '매거진'";
+//   } else if (type == "picture") {
+//     sql = "SELECT * FROM workshops WHERE type = '사진'";
+//   } else if (type == "postcardBook") {
+//     sql = "SELECT * FROM workshops WHERE type = '엽서북'";
+//   }
+
+//   try {
+//     const result = await pool.request().query(sql);
+//     const rows = result.recordset;
+
+//     for (const row of rows) {
+//       const imagePath = path.join(
+//         __dirname,
+//         "public",
+//         "ex_photo",
+//         row.preview_image_uri,
+//       );
+//       const imageBuffer = fs.readFileSync(imagePath);
+//       const base64Image = imageBuffer.toString("base64");
+
+//       row.preview_image = base64Image;
+//     }
+
+//     const user = res.locals.loggedInUser;
+//     res.render("index.ejs", { data: rows, userName: user });
+//   } catch (err) {
+//     console.error("Error executing MSSQL query:", err);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
+
 app.get("/login", function (req, res) {
   res.render("login.ejs");
 });

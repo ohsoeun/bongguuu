@@ -1,4 +1,3 @@
-var mysql = require("mysql");
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
@@ -7,6 +6,8 @@ const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const crypto = require("crypto");
 const fs = require("fs");
+const { ConnectionPool } = require("mssql");
+
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -31,27 +32,40 @@ app.use(
 );
 app.use(checkLoginStatus);
 
-var conn = mysql.createConnection({
-  host: "localhost",
-  user: "root", // user
-  password: "1234", // 비밀번호
-  database: "bonggu", // db명
-});
+const config = {
+  user: "sa",
+  password: "1234",
+  server: "localhost",
+  database: "bonggu",
+  options: {
+    trustServerCertificate: true,
+  },
+};
 
-conn.connect();
+const pool = new ConnectionPool(config);
+
+pool
+  .connect()
+  .then((pool) => {
+    console.log("Connected to MSSQL");
+    return pool;
+  })
+  .catch((err) => {
+    console.log("err :", err);
+  });
 
 app.listen(8080, function () {
-  console.log("포트 8080으로 서버 대기 중...");
+  console.log("Server is listening on port 8080...");
 });
 
-app.get("/", function (req, res) {
+app.get("/", async function (req, res) {
   const user = res.locals.loggedInUser;
 
-  let sql = "SELECT * FROM books";
-  conn.query(sql, function (err, rows) {
-    if (err) throw err;
+  try {
+    const result = await pool.request().query("SELECT * FROM books");
+    const rows = result.recordset;
 
-    rows.forEach((row) => {
+    for (const row of rows) {
       const imagePath = path.join(
         __dirname,
         "public",
@@ -62,20 +76,24 @@ app.get("/", function (req, res) {
       const base64Image = imageBuffer.toString("base64");
 
       row.preview_image = base64Image;
-    });
+    }
 
     res.render("index.ejs", { data: rows, userName: user });
-  });
+  } catch (err) {
+    console.error("Error executing mssql query:", err);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
-app.get("/goods", function (req, res) {
+app.get("/goods", async function (req, res) {
   const user = res.locals.loggedInUser;
 
   let sql = "SELECT * FROM goods";
-  conn.query(sql, function (err, rows) {
-    if (err) throw err;
+  try {
+    const result = await pool.request().query(sql);
+    const rows = result.recordset;
 
-    rows.forEach((row) => {
+    for (const row of rows) {
       const imagePath = path.join(
         __dirname,
         "public",
@@ -86,20 +104,24 @@ app.get("/goods", function (req, res) {
       const base64Image = imageBuffer.toString("base64");
 
       row.preview_image = base64Image;
-    });
+    }
 
     res.render("index.ejs", { data: rows, userName: user });
-  });
+  } catch (err) {
+    console.error("Error executing MSSQL query:", err);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
-app.get("/workshops", function (req, res) {
+app.get("/workshops", async function (req, res) {
   const user = res.locals.loggedInUser;
 
   let sql = "SELECT * FROM workshops";
-  conn.query(sql, function (err, rows) {
-    if (err) throw err;
+  try {
+    const result = await pool.request().query(sql);
+    const rows = result.recordset;
 
-    rows.forEach((row) => {
+    for (const row of rows) {
       const imagePath = path.join(
         __dirname,
         "public",
@@ -110,25 +132,29 @@ app.get("/workshops", function (req, res) {
       const base64Image = imageBuffer.toString("base64");
 
       row.preview_image = base64Image;
-    });
+    }
 
     res.render("index.ejs", { data: rows, userName: user });
-  });
+  } catch (err) {
+    console.error("Error executing MSSQL query:", err);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
-app.get("/content/:id/:product_type", function (req, res) {
+app.get("/content/:id/:product_type", async function (req, res) {
   const productId = req.params.id;
   const productType = req.params.product_type;
 
-  let sql = `SELECT * FROM ${productType} WHERE id = ?`;
-  let params = [productId];
+  let sql = `SELECT * FROM ${productType} WHERE id = @productId`;
+  try {
+    const result = await pool
+      .request()
+      .input("productId", productId)
+      .query(sql);
 
-  conn.query(sql, params, function (err, result) {
-    if (err) throw err;
+    const productInfo = result.recordset[0];
 
-    if (result.length > 0) {
-      const productInfo = result[0];
-
+    if (productInfo) {
       const imagePath = path.join(
         __dirname,
         "public",
@@ -145,9 +171,143 @@ app.get("/content/:id/:product_type", function (req, res) {
         userName: res.locals.loggedInUser,
       });
     } else {
-      res.status(404).send("Book not found");
+      res.status(404).send("Product not found");
     }
-  });
+  } catch (err) {
+    console.error("Error executing MSSQL query:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+app.get("/bookMarks", async function (req, res) {
+  const user = res.locals.loggedInUser;
+
+  if (user) {
+    let bookmarksSql = "SELECT * FROM bonggu.bookmarks WHERE user_id = @userId";
+    try {
+      const bookmarksResults = await pool
+        .request()
+        .input("userId", user.id)
+        .query(bookmarksSql);
+
+      let bookmarkDetails = [];
+      if (bookmarksResults.recordset.length === 0) {
+        return res.send(
+          '<script>alert("장바구니에 등록된 상품이 없습니다."); window.location.href = "/";</script>',
+        );
+      }
+
+      for (const bookmark of bookmarksResults.recordset) {
+        let typeSql = `SELECT * FROM bonggu.${bookmark.type} WHERE id = @productId`;
+        let typeParams = [bookmark.product_id];
+
+        const typeResults = await pool
+          .request()
+          .input("productId", bookmark.product_id)
+          .query(typeSql);
+
+        bookmarkDetails.push({
+          bookmark: bookmark,
+          details: typeResults.recordset[0],
+        });
+      }
+
+      res.render("bookMarks.ejs", {
+        user: user.name,
+        data: bookmarkDetails,
+      });
+    } catch (err) {
+      console.error("Error fetching bookmarks:", err);
+      res.status(500).send("Internal Server Error");
+    }
+  } else {
+    res.send(
+      '<script>alert("로그인이 필요합니다."); window.location.href = "/login";</script>',
+    );
+  }
+});
+
+app.post("/signup_server", async function (req, res) {
+  let sql =
+    "INSERT INTO `users` (`id`, `password`, `name`, `email`, `address`, `phone_number`, `type`) VALUES (@userid, @password, @username, @email, @address, @phone, 'user');";
+  let params = {
+    userid: req.body.userid,
+    password: req.body.password,
+    username: req.body.username,
+    email: req.body.email,
+    address: req.body.address,
+    phone: req.body.phone,
+  };
+
+  try {
+    await pool.request().input(params).query(sql);
+    console.log("데이터 추가 성공");
+  } catch (err) {
+    console.error("Error inserting data:", err);
+    res.status(500).send("Internal Server Error");
+  }
+  res.redirect("/");
+});
+
+app.post("/signin_server", async function (req, res) {
+  const id = req.body.userid;
+  const password = req.body.password;
+
+  let sql = "SELECT * FROM users WHERE id = @id AND password = @password";
+  let params = { id, password };
+
+  try {
+    const result = await pool.request().input(params).query(sql);
+
+    if (result.recordset.length > 0) {
+      console.log("로그인 성공");
+      const name = result.recordset[0].name;
+      req.session.user = { id, name };
+      res.redirect("/");
+    } else {
+      res.send(
+        '<script>alert("로그인이 실패"); window.location.href = "/login";</script>',
+      );
+    }
+  } catch (err) {
+    console.error("Error executing MSSQL query:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+app.post("/bookmark", async function (req, res) {
+  const userId = res.locals.loggedInUser.id;
+  const productId = req.body.productId;
+  const registrationDate = req.body.registrationDate;
+  const type = req.body.type;
+
+  let checkExistenceSql =
+    "SELECT * FROM `bonggu`.`bookmarks` WHERE `user_id` = @userId AND `product_id` = @productId AND `type` = @type;";
+
+  let checkExistenceParams = { userId, productId, type };
+
+  try {
+    const results = await pool
+      .request()
+      .input(checkExistenceParams)
+      .query(checkExistenceSql);
+
+    if (results.recordset.length > 0) {
+      res.status(400).send("이미 장바구니에 있는 상품입니다.");
+    } else {
+      let insertSql =
+        "INSERT INTO `bonggu`.`bookmarks` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (@userId, @productId, @registrationDate, @type);";
+
+      let insertParams = { userId, productId, registrationDate, type };
+
+      await pool.request().input(insertParams).query(insertSql);
+
+      res.status(200).send("Bookmarked successfully");
+    }
+  } catch (err) {
+    console.error("Error checking bookmark existence:", err);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 app.get("/login", function (req, res) {
@@ -156,102 +316,6 @@ app.get("/login", function (req, res) {
 
 app.get("/signup", function (req, res) {
   res.render("signup.ejs");
-});
-
-app.get("/bookMarks", function (req, res) {
-  const user = res.locals.loggedInUser;
-
-  if (user) {
-    let bookmarksSql = "SELECT * FROM bonggu.bookmarks WHERE user_id = ?";
-    let bookmarksParams = [user.id];
-
-    conn.query(bookmarksSql, bookmarksParams, function (err, bookmarksResults) {
-      if (err) {
-        console.error("Error fetching bookmarks:", err);
-        res.status(500).send("Internal Server Error");
-      } else {
-        let bookmarkDetails = [];
-        if (bookmarksResults.length === 0) {
-          res.send(
-            '<script>alert("장바구니에 등록된 상품이 없습니다."); window.location.href = "/";</script>',
-          );
-        }
-
-        bookmarksResults.forEach((bookmark) => {
-          let typeSql, typeParams;
-          typeSql = `SELECT * FROM bonggu.${bookmark.type} WHERE id = ?`;
-          typeParams = [bookmark.product_id];
-
-          conn.query(typeSql, typeParams, function (err, typeResults) {
-            if (err) {
-              console.error(
-                `Error fetching details for type ${bookmark.type}:`,
-                err,
-              );
-            } else {
-              bookmarkDetails.push({
-                bookmark: bookmark,
-                details: typeResults[0],
-              });
-
-              if (bookmarkDetails.length === bookmarksResults.length) {
-                res.render("bookMarks.ejs", {
-                  user: user.name,
-                  data: bookmarkDetails,
-                });
-              }
-            }
-          });
-        });
-      }
-    });
-  } else {
-    res.send(
-      '<script>alert("로그인이 필요합니다."); window.location.href = "/login";</script>',
-    );
-  }
-});
-
-app.post("/signup_server", function (req, res) {
-  let sql =
-    "INSERT INTO `users` (`id`, `password`, `name`, `email`, `address`, `phone_number`, `type`) VALUES (?, ?, ?, ?, ?, ?, ?);";
-  let params = [
-    req.body.userid,
-    req.body.password,
-    req.body.username,
-    req.body.email,
-    req.body.address,
-    req.body.phone,
-    "user",
-  ];
-  conn.query(sql, params, function (err, result) {
-    if (err) throw err;
-    console.log("데이터 추가 성공");
-  });
-  res.redirect("/");
-});
-
-app.post("/signin_server", function (req, res) {
-  const id = req.body.userid;
-  const password = req.body.password;
-
-  let sql = "SELECT * FROM users WHERE id = ? AND password = ?";
-  let params = [id, password];
-
-  conn.query(sql, params, function (err, result) {
-    if (err) throw err;
-
-    if (result.length > 0) {
-      console.log("로그인 성공");
-      console.log(result);
-      const name = result[0].name;
-      req.session.user = { id, name };
-      res.redirect("/");
-    } else {
-      console.log("로그인 실패");
-      res.send("login failed");
-    }
-  });
 });
 
 app.post("/bookmark", function (req, res) {
@@ -291,46 +355,6 @@ app.post("/bookmark", function (req, res) {
   });
 });
 
-const updatePurchaseHistory = async (userId, productId, type) => {
-  const currentDate = new Date();
-  const year = currentDate.getFullYear();
-  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-  const day = String(currentDate.getDate()).padStart(2, "0");
-  const purchaseDate = `${year}-${month}-${day}`;
-
-  const insertHistorySql =
-    "INSERT INTO `bonggu`.`purchase_history` (`user_id`, `product_id`, `purchase_date`, `type`) VALUES (?, ?, ?, ?);";
-
-  const insertHistoryParams = [userId, productId, purchaseDate, type];
-
-  await new Promise((resolve, reject) => {
-    conn.query(insertHistorySql, insertHistoryParams, function (err) {
-      if (err) {
-        console.error("Error inserting into purchase_history:", err);
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-};
-
-const updateQuantity = async (item) => {
-  // Update quantity
-  const updateQuantitySql = `UPDATE bonggu.${item.type} SET remaining_quantity = remaining_quantity - 1 WHERE id = ?;`;
-
-  await new Promise((resolve, reject) => {
-    conn.query(updateQuantitySql, [item.id], function (err) {
-      if (err) {
-        console.error(`Error updating ${item.type} quantity:`, err);
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-};
-
 app.post("/purchase", async function (req, res) {
   const userId = res.locals.loggedInUser.id;
   const selectedItems = req.body.selectedItems;
@@ -340,48 +364,28 @@ app.post("/purchase", async function (req, res) {
       console.log("Selected item ID:", item.id);
       console.log("Selected item type:", item.type);
 
-      // Check remaining quantity before processing the purchase
-      const checkQuantitySql = `SELECT remaining_quantity FROM bonggu.${item.type} WHERE id = ?;`;
-      const checkQuantityResult = await new Promise((resolve, reject) => {
-        conn.query(checkQuantitySql, [item.id], function (err, result) {
-          if (err) {
-            console.error(`Error checking ${item.type} quantity:`, err);
-            reject(err);
-          } else {
-            resolve(result[0] ? result[0].remaining_quantity : null);
-          }
-        });
-      });
+      const checkQuantitySql = `SELECT remaining_quantity FROM bonggu.${item.type} WHERE id = @productId;`;
+      const checkQuantityResult = await pool
+        .request()
+        .input("productId", item.id)
+        .query(checkQuantitySql);
 
-      if (checkQuantityResult <= 0) {
-        // Send a JSON response with a specific structure for alert handling on the client side
+      if (checkQuantityResult.recordset[0].remaining_quantity <= 0) {
         return res.status(400).json({
           success: false,
           alertMessage: "상품의 남은 수량이 없습니다.",
         });
       }
 
-      // Update purchase history
       await updatePurchaseHistory(userId, item.id, item.type);
 
-      // Delete bookmark
-      const deleteBookmarkSql = "DELETE FROM bonggu.bookmarks WHERE id = ?;";
-      await new Promise((resolve, reject) => {
-        conn.query(deleteBookmarkSql, [item.id], function (err) {
-          if (err) {
-            console.error("Error deleting bookmark:", err);
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
-      });
+      const deleteBookmarkSql =
+        "DELETE FROM bonggu.bookmarks WHERE id = @productId;";
+      await pool.request().input("productId", item.id).query(deleteBookmarkSql);
 
-      // Update quantity after processing each selected item
       await updateQuantity(item);
     }
 
-    // Send the success response after processing all selected items
     res.json({ success: true, message: "구매가 완료되었습니다." });
   } catch (error) {
     console.error("Error processing selected items:", error);
@@ -389,28 +393,23 @@ app.post("/purchase", async function (req, res) {
   }
 });
 
-app.post("/search", function (req, res) {
-  const searchTerm = req.body.searchTerm; // Assuming the input field has a 'name' attribute of 'searchTerm'
+app.post("/search", async function (req, res) {
+  const searchTerm = req.body.searchTerm;
   console.log(searchTerm);
-  // Perform your search logic using the searchTerm
-  // For example, you can use a LIKE query to search for titles that contain the searchTerm
-  const searchQuery = "SELECT * FROM bonggu.books WHERE title LIKE ?"; // Adjust based on your table structure
+  const searchQuery = "SELECT * FROM bonggu.books WHERE title LIKE @searchTerm";
 
   const searchResults = [];
 
-  // Execute the query with the search term
-  conn.query(searchQuery, [`%${searchTerm}%`], function (err, results) {
-    if (err) {
-      console.error("Error executing search query:", err);
-      return res.status(500).send("Internal Server Error");
-    }
+  try {
+    const results = await pool
+      .request()
+      .input("searchTerm", `%${searchTerm}%`)
+      .query(searchQuery);
 
-    // Process the search results
-    results.forEach((result) => {
-      // Customize this part based on your table structure
+    results.recordset.forEach((result) => {
       searchResults.push({
         id: result.id,
-        preview_image: result.preview_image, // Assuming this column stores base64-encoded images
+        preview_image: result.preview_image,
         title: result.title,
         price: result.price,
         product_type: result.product_type,
@@ -419,8 +418,48 @@ app.post("/search", function (req, res) {
 
     // Render the searchResults.ejs template with the data
     res.render("search.ejs", { searchTerm, data: searchResults });
-  });
+  } catch (err) {
+    console.error("Error executing MSSQL query:", err);
+    return res.status(500).send("Internal Server Error");
+  }
 });
+
+const updatePurchaseHistory = async (userId, productId, type) => {
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+  const day = String(currentDate.getDate()).padStart(2, "0");
+  const purchaseDate = `${year}-${month}-${day}`;
+
+  const insertHistorySql =
+    "INSERT INTO `bonggu`.`purchase_history` (`user_id`, `product_id`, `purchase_date`, `type`) VALUES (@userId, @productId, @purchaseDate, @type);";
+
+  const insertHistoryParams = {
+    userId,
+    productId,
+    purchaseDate,
+    type,
+  };
+
+  try {
+    await pool.request().input(insertHistoryParams).query(insertHistorySql);
+  } catch (err) {
+    console.error("Error inserting into purchase_history:", err);
+    throw err;
+  }
+};
+
+const updateQuantity = async (item) => {
+  // Update quantity
+  const updateQuantitySql = `UPDATE bonggu.${item.type} SET remaining_quantity = remaining_quantity - 1 WHERE id = @productId;`;
+
+  try {
+    await pool.request().input("productId", item.id).query(updateQuantitySql);
+  } catch (err) {
+    console.error(`Error updating ${item.type} quantity:`, err);
+    throw err;
+  }
+};
 
 function checkLoginStatus(req, res, next) {
   const user = req.session.user;

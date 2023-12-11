@@ -1,0 +1,77 @@
+USE bonggu;
+
+CREATE TABLE users (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL,
+    type VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE books (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    summary TEXT NOT NULL,
+    detailed_image_uri VARCHAR(255) NOT NULL,
+    preview_image_uri VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    remaining_quantity INT NOT NULL,
+    product_type VARCHAR(45) NOT NULL DEFAULT 'books'
+);
+
+CREATE TABLE goods (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    summary TEXT NOT NULL,
+    detailed_image_uri VARCHAR(255) NOT NULL,
+    preview_image_uri VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    remaining_quantity INT NOT NULL,
+    product_type VARCHAR(45) NOT NULL DEFAULT 'goods'
+);
+
+CREATE TABLE workshops (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    summary TEXT NOT NULL,
+    detailed_image_uri VARCHAR(255) NOT NULL,
+    preview_image_uri VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    remaining_quantity INT NOT NULL,
+    product_type VARCHAR(45) NOT NULL DEFAULT 'workshops'
+);
+
+CREATE TABLE bookmarks (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    user_id VARCHAR(255) NOT NULL,
+    product_id INT NOT NULL,
+    registration_date DATE NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE purchase_history (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    user_id VARCHAR(255) NOT NULL,
+    product_id INT NOT NULL,
+    purchase_date DATE NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE reviews (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    user_id VARCHAR(255) NOT NULL,
+    product_id INT NOT NULL,
+    review_text TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);

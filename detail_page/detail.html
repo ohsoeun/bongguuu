@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="C:\Users\user\Desktop\detail_page\style\detail_style.css">
+</head>
+<body>
+
+    <header>
+        <a href="index.html">
+            <img src="C:\Users\user\Desktop\detail_page\header_logo\bongu_logo.jpg" alt="Header Image">
+        </a>
+       
+        <div class="header-links">
+            <a href="login.html">로그인</a>
+            <a href="signup_infor.html">회원가입</a>
+            <a href="#">장바구니</a>
+            <a href="#">즐겨찾기</a>
+        </div>
+    </header>
+
+    <nav>
+        <div class="menu">
+            <a href="#">Books</a>
+            <div class="submenu">
+                <a href="#">에세이 | 소설 | 문학</a>
+                <a href="#">디자인 | 문화 | 예술</a>
+                <a href="#">매거진</a>
+                <a href="#">사진</a>
+                <a href="#">엽서북</a>
+            </div>
+        </div>
+    
+        <div class="menu">
+            <a href="#">Goods</a>
+            <div class="submenu">
+                <a href="#">스티커 | 뱃지 | 포스터</a>
+                <a href="#">달력</a>
+                <a href="#">메모지 | 노트 | 엽서</a>
+                <a href="#">펜 | 티셔츠</a>
+            </div>
+        </div>
+    
+        <div class="menu">
+            <a href="#">Workshop</a>
+            <div class="submenu"></div>
+        </div>
+    
+        <div class="menu">
+            <a href="#">Infor</a>
+            <div class="submenu"></div>
+        </div>
+
+        <div class="search-container">
+            <input type="text" placeholder="검색어를 입력하세요...">
+            <button type="button">검색</button>
+        </div>
+
+    </nav>
+
+    <div class="book-details">
+        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege.png" alt="상세페이지 대표사진">
+        <div class="book-info">
+            <h2>도서 제목</h2>
+            <p>저자: 작가명</p>
+            <p>가격: ₩10,000</p>
+            <p>도서 소개: 도서에 대한 간략한 설명이 여기에 들어갑니다.</p><br>
+            
+            <p><strong>배송비 3,000원</strong> &nbsp | 도서산간 배송비 추가</p>
+            <p><strong>배송 안내</strong> 
+                <br>봉구택배로 발송되며 택배비는 3000원 ,<br> 
+                50,000원 이상 구매 시 택배비가 무료입니다. </p> 
+    
+            <div class="quantity-input">
+                <button type="button" onclick="changeQuantity(-1)">━</button>
+                <input type="text" name="quantity" value="1" readonly>
+                <button type="button" onclick="changeQuantity(1)">╋</button>
+            </div>
+            <button class="buy">구매하기</button>
+            <button class="list-buy">장바구니 담기</button>
+        </div>
+    </div>
+
+    <detail-nav>
+        <a href="#detail-images">상세정보</a>
+        <a href="#purchase-reviews">구매평</a>
+    </detail-nav>
+
+    <div class="detail-images" id="detail-images">
+        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_1.jpg" alt="test1">
+        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_2.jpg" alt="test2">
+        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_3.jpg" alt="test3">
+        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_4.jpg" alt="test4">
+        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_5.jpg" alt="test5">
+        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_6.jpg" alt="test6">
+    </div>
+
+    <div class="etc">
+        <div class="one">
+            <h4>상품 결제정보</h4>
+           <p> 무통장 입금시 입금 확인 후 배송됩니다. 금액은 직접 입금하시면 됩니다.<br><br>
+            
+            주문시 입력한 입금자명과 실제입금자의 성명이 반드시 일치하여야 하며, 일치하지 않을 경우 따로 말씀해주세요</p>
+        </div>
+        <div class="two">
+            <h4>환불정보</h4>
+            <p>봉구에서 구매한 제품을 환불 또는 교환원하시는 분들은 상품수령 후 7일 이내 고객센터 문의 주세요<br><br>
+            
+            단, 제품은 뜯어져 있거나 고객에 의해 훼손된 경우에는 교환 및 환불이 불가합니다.<br><br>
+            
+            받아보신 후에 인쇄 사고나 재단 등 제작이 잘못되었을 경우 환불이 가능합니다.<br><br>
+            
+            ※ 고객님의 마음이 바뀌어 교환, 반품을 하실 경우 환불이 불가합니다. 신중히 구매해주세요.</p>
+        </div>
+            
+    </div>
+
+    <div class="purchase-reviews" id="purchase-reviews">
+        <h2>구매평</h2>
+
+        <!-- 구매평 -->
+        <div class="review">
+            <p>등록된 구매평이 없습니다. </p>
+        </div>
+        <!-- 구매평 작성 버튼 -->
+        <button class="write-review-btn" onclick="toggleReviewForm()">구매평 작성</button>
+
+        <!-- 구매평 작성 폼 -->
+        <div class="review-form" id="review-form">
+            <textarea placeholder="구매평을 작성해주세요..."></textarea>
+            <button class="submit-btn">작성 완료</button>
+        </div>
+    </div>
+
+</body>
+
+        <div class="footer-container">
+            <div class="footer-section">
+                <h4>회사 정보</h4>
+                <p>
+                   봉구책방<br>
+                   대표 : xxx<br>
+                   오프라인 : 서울시 서초구 도서로 123, 봉구빌딩 5층<br>
+                </p>
+            </div>
+            <div class="footer-section">
+                <h4>연락처</h4>
+                <p>
+                Email : info@bonggu.co.kr<br>
+                전화번호 : 02-XXXX-XXXX<br><br><br>
+                </p>  
+               
+            </div>
+            <div class="footer-section">
+                <h4>SNS</h4>
+                <ul>
+                    <li><a href="https://www.facebook.com/bongubooks" target="_blank">Facebook</a></li>
+                    <li><a href="https://twitter.com/bongubooks" target="_blank">Twitter</a></li>
+                    <li><a href="https://www.instagram.com/bongubooks" target="_blank">Instagram</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-container2">
+            <p>
+                <a href="#none">이용약관 |</a>
+                <a href="#none">개인정보처리방침 |</a>  Copyright ⓒ 2023 봉구책방 All rights reserved 
+            </p>
+        </div>
+    </footer>
+    <script src=C:\Users\user\Desktop\detail_page\script\script.js defer></script>
+
+</html>

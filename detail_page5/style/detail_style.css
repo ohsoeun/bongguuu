@@ -1,0 +1,478 @@
+@charset "UTF-8";
+
+
+body {
+    
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #F7F7F7;
+    
+}
+
+
+
+header {
+    position: relative;
+    text-align: center;
+    background-color: #F7F7F7;
+}
+
+
+header img {
+    margin-top: 15px;
+    height: 100px;
+    width: 200px;
+}
+
+.header-links {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.header-links a {
+    color: #0D2645;
+    font-size: 14px;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+nav {
+    background-color: #F7F7F7;
+    margin-top: 30px;
+    text-align: center;
+    border-bottom: 1px solid #0D2645;
+    display: flex;
+    padding-right: 20px;    
+    padding-left: 120px;
+}
+
+.nav div{
+    justify-content: space-between; 
+}
+/* 새로운 검색창 스타일 */
+.search-container {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    margin-bottom: 3px;
+  /* 왼쪽 여백을 auto로 설정하여 맨 오른쪽에 정렬 */
+}
+
+.search-container input {
+    padding: 7px;
+    margin-right: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    flex :none;
+}
+
+.search-container button {
+    padding: 7px;
+    background-color: #0D2645;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    flex: none;
+}
+
+
+.menu {
+    display: inline-block;
+    margin-right: 20px;
+    padding-left: 45px;
+    padding-right: 45px;
+    position: relative;
+    z-index: 1;
+}
+
+.menu a {
+    color: #0D2645;
+    text-decoration: none;
+    padding: 10px 20px;
+    display: block;
+    background-color: #F7F7F7;
+}
+
+.menu:hover .submenu {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+nav div.submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ccc;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    opacity: 0;
+    transform: translateY(-10px); /* 조금 더 자연스러운 위치로 조정 */
+    width: 200px;
+    z-index: 2;
+}
+
+.menu:hover .submenu {
+    display: block;
+}
+
+.submenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #0D2645;
+    width: 200px;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.submenu a {
+    color: #B9B9B9;
+    padding: 10px;
+    text-align: center;
+    transition: color 0.3s; /* 색깔 변화를 부드럽게 만들기 위한 트랜지션 추가 */
+}
+
+/* 색깔 변화 스타일 추가 */
+.submenu a:hover {
+    color: #0D2645; /* 호버 시 텍스트 색깔 변경 */
+    font-weight: bold;
+    font-size : 17px;
+}
+
+/*상세페이지*/
+.book-details {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: auto;
+    color: #3d3c3c;
+    background-color: #ffffff;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.book-details img {
+    max-width: 55%;
+    height: auto;
+    margin-right: 20px;
+    
+}
+
+.book-info {
+    padding: 20px;
+}
+
+.book-info h2 {
+    margin-top: 10px;
+    
+}
+
+.buy {
+    background-color: #203c5f;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    margin-right:4px; /* 간격 조절 */
+}
+
+.list-buy {
+    background-color: #203c5f;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    margin-top: 40px;
+    
+}
+
+/*주문수량 버튼*/
+.quantity-input {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 20px;
+    margin-top: 30px;
+}
+
+.quantity-input input {
+    width: 40px;
+    padding: 5px 10px;
+    text-align: center;
+    margin: 0 5px;
+    font-size: 16px;
+}
+
+.quantity-input button {
+    background-color: #dcdcdc;
+    color: #203c5f;
+    border: none;
+    padding: 6px 11px; /* 크기 조절 */
+    padding-bottom: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+   
+} 
+
+.detail-images {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* 수평 중앙 정렬 */
+    align-items: center; /* 수직 중앙 정렬 */
+    
+}
+.detail-images img {
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.info-section {
+    text-align: center;
+    margin-bottom: 20px; /* 정보 섹션 간격 조절 */
+    
+}
+
+/* 네비게이션 스타일 */
+detail-nav {
+    display: flex;
+    justify-content: center;
+    border-bottom: 2px solid #d2d2d2;
+    background-color: #ffffff;
+    padding: 10px;
+    font-size: 17px;
+    margin-bottom: 60px;
+
+    
+}
+
+detail-nav a {
+    color: #585858;
+    text-decoration: none;
+    padding-right:180px;
+    padding-left:180px;
+    cursor: pointer;
+}
+
+/*etc 구성
+.etc{
+    border-top: 1px solid #d2d2d2; 
+   
+}
+.etc .one h4{
+    font-size: 18px;
+    color: #333;
+    text-align: left;
+    padding-left: 20px;
+    margin-top: 30px;
+    
+}
+
+.etc .one p{
+    padding: 10px;
+    border-bottom: 1px solid #d2d2d2;
+    margin-bottom: 15px;
+    height: 95px;
+    
+}
+
+
+.etc .two h4{
+    font-size: 18px;
+    color: #333;
+    text-align: left;
+    padding-left: 20px;
+    margin-top: 30px;
+    
+}
+
+.etc .two p{
+    padding: 10px;
+    height: 95px;
+    margin-bottom: 20px;
+    
+    
+}
+*/
+
+.etc {
+    margin-top: 30px;
+}
+
+.one, .two {
+    width: 100%;
+    height:45%;
+    padding: 20px;
+
+}
+
+.one h4, .two h4 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.one p, .two p {
+    color: #555;
+    font-size: 15px;
+    line-height: 1.5;
+    border-bottom: 1px solid #d2d2d2;
+}
+
+
+/* 구매평 스타일 */
+.purchase-reviews {
+    text-align: center;
+    
+}
+
+.purchase-reviews h2 {
+    font-size: 16px;
+    color: #333;
+    margin-top: 5px;
+    text-align: left;
+    padding-left: 20px;
+    
+}
+
+.purchase-reviews .review {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #fff;
+}
+
+.purchase-reviews .review p {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.5;
+}
+/* 구매평 작성 버튼 스타일 */
+.write-review-btn {
+    background-color: #b6b6b6;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    align-items: left;
+    margin-bottom: 15px;
+}
+
+/* 구매평 작성 폼 스타일 */
+.review-form {
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.review-form textarea {
+    width: 100%;
+    max-width: 700px;
+    height: 100px;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.review-form .submit-btn {
+    background-color: #888888;
+    color: #fff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: block;
+    margin: 0 auto;
+    margin-bottom: 15px;
+}
+/*footer */
+a {
+    color: #203c5f;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #0D2645;
+    text-decoration: none;
+}
+
+.footer {
+    
+    padding: 30px 0;
+    font-size: 14px;
+    
+}
+
+.footer-container {
+    
+    background-color: #F7F7F7;
+    color: #203c5f;
+    border-top: 1px solid #ddd;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    
+    
+  
+}
+
+.footer-container2 {
+    
+    background-color: #0D2645;
+    color: #F7F7F7;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;    
+}
+
+.footer-container2 p{
+    padding-left: 350px;
+    color: #F7F7F7;
+}
+
+.footer-container2 a{
+    
+    color: #F7F7F7;
+}
+
+.footer-section {
+    flex: 1;
+    margin: 10px 20px;
+    text-align: center;
+    
+}
+
+.footer-section h4 {
+    display: inline-block; /* 블록 레벨 요소를 인라인 레벨로 변경 */
+    margin-bottom: 0; /* 기본 마진 제거 */
+   
+    
+
+
+}

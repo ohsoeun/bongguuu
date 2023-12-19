@@ -4,10 +4,14 @@
   </a>
 
   <div class="header-links">
+    <% if (!user) { %>
     <a href="/login">로그인</a>
     <a href="/signup">회원가입</a>
-    <a href="/bookMarks">장바구니</a>
+    <% } else { %>
+    <a href="#"><%= user.name %></a>
+    <a href="/carts">장바구니</a>
     <a href="#">즐겨찾기</a>
+    <% } %>
   </div>
 </header>
 <!-- Header End -->
@@ -17,11 +21,11 @@
   <div class="menu">
     <a href="/">Books</a>
     <div class="submenu">
-      <a href="/books/essay">에세이 | 소설 | 문학</a>
-      <a href="/books/design">디자인 | 문화 | 예술</a>
-      <a href="/books/magazine">매거진</a>
-      <a href="/books/picture">사진</a>
-      <a href="/books/postcardBook">엽서북</a>
+      <a href="/book/essay">에세이 | 소설 | 문학</a>
+      <a href="/book/design">디자인 | 문화 | 예술</a>
+      <a href="/book/magazine">매거진</a>
+      <a href="/book/picture">사진</a>
+      <a href="/book/postcardBook">엽서북</a>
     </div>
   </div>
 
@@ -37,6 +41,11 @@
 
   <div class="menu">
     <a href="/workshops">Workshop</a>
+    <div class="submenu"></div>
+  </div>
+
+  <div class="menu">
+    <a href="/community">Community</a>
     <div class="submenu"></div>
   </div>
 

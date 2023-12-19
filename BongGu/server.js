@@ -59,18 +59,17 @@ app.listen(8080, function () {
 });
 
 app.get("/", async function (req, res) {
-  const user = res.locals.loggedInUser;
-
   try {
     const result = await pool.request().query("SELECT * FROM books");
     const rows = result.recordset;
+    console.log(req.session.user);
 
     for (const row of rows) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "ex_photo",
-        row.preview_image_uri,
+        "preview_img",
+        row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
@@ -78,7 +77,7 @@ app.get("/", async function (req, res) {
       row.preview_image = base64Image;
     }
 
-    res.render("index.ejs", { data: rows, userName: user });
+    res.render("index.ejs", { data: rows, user: req.session.user });
   } catch (err) {
     console.error("Error executing mssql query:", err);
     res.status(500).send("Internal Server Error");
@@ -86,8 +85,6 @@ app.get("/", async function (req, res) {
 });
 
 app.get("/goods", async function (req, res) {
-  const user = res.locals.loggedInUser;
-
   let sql = "SELECT * FROM goods";
   try {
     const result = await pool.request().query(sql);
@@ -97,8 +94,8 @@ app.get("/goods", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "ex_photo",
-        row.preview_image_uri,
+        "preview_img",
+        row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
@@ -106,17 +103,15 @@ app.get("/goods", async function (req, res) {
       row.preview_image = base64Image;
     }
 
-    res.render("index.ejs", { data: rows, userName: user });
+    res.render("index.ejs", { data: rows, user: req.session.user });
   } catch (err) {
     console.error("Error executing MSSQL query:", err);
     res.status(500).send("Internal Server Error");
   }
 });
 
-app.get("/workshops", async function (req, res) {
-  const user = res.locals.loggedInUser;
-
-  let sql = "SELECT * FROM workshops";
+app.get("/workshop", async function (req, res) {
+  let sql = "SELECT * FROM workshop";
   try {
     const result = await pool.request().query(sql);
     const rows = result.recordset;
@@ -125,8 +120,8 @@ app.get("/workshops", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "ex_photo",
-        row.preview_image_uri,
+        "preview_img",
+        row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
@@ -134,7 +129,7 @@ app.get("/workshops", async function (req, res) {
       row.preview_image = base64Image;
     }
 
-    res.render("index.ejs", { data: rows, userName: user });
+    res.render("index.ejs", { data: rows, user: req.session.user });
   } catch (err) {
     console.error("Error executing MSSQL query:", err);
     res.status(500).send("Internal Server Error");
@@ -146,6 +141,7 @@ app.get("/content/:id/:product_type", async function (req, res) {
   const productType = req.params.product_type;
 
   let sql = `SELECT * FROM ${productType} WHERE id = @productId`;
+  let img_sql = "SELECT * FROM product_images WHERE product_id = @productId";
   try {
     const result = await pool
       .request()
@@ -158,17 +154,51 @@ app.get("/content/:id/:product_type", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "ex_photo",
-        productInfo.detailed_image_uri,
+        "preview_img",
+        productInfo.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
 
-      productInfo.detail_image = base64Image;
+      productInfo.preview_image = base64Image;
 
+      const imageResults = await pool
+        .request()
+        .input("productId", productId)
+        .query(img_sql);
+
+      const imgResults = imageResults.recordset;
+      let images = [];
+      for (let i = 0; i < imgResults.length; i++) {
+        const imagePath = path.join(
+          __dirname,
+          "public",
+          "detail_img",
+          imgResults[i].image,
+        );
+        const imageBuffer = fs.readFileSync(imagePath);
+        const base64Image = imageBuffer.toString("base64");
+
+        images.push(base64Image);
+      }
+      const imagess = imageResults.recordset.map((image) => {
+        const imagePath = path.join(
+          __dirname,
+          "public",
+          "detail_img",
+          image.image,
+        );
+        const imageBuffer = fs.readFileSync(imagePath);
+        const base64Image = imageBuffer.toString("base64");
+
+        return {
+          image: base64Image,
+        };
+      });
       res.render("content.ejs", {
         product: productInfo,
-        userName: res.locals.loggedInUser,
+        images: images,
+        user: req.session.user,
       });
     } else {
       res.status(404).send("Product not found");
@@ -179,45 +209,45 @@ app.get("/content/:id/:product_type", async function (req, res) {
   }
 });
 
-app.get("/bookMarks", async function (req, res) {
-  const user = res.locals.loggedInUser;
+app.get("/carts", async function (req, res) {
+  const user = req.session.user;
 
   if (user) {
-    let bookmarksSql = "SELECT * FROM bonggu.bookmarks WHERE user_id = @userId";
+    let cartsSql = "SELECT * FROM carts WHERE user_id = @userId";
     try {
-      const bookmarksResults = await pool
+      const cartsResults = await pool
         .request()
         .input("userId", user.id)
-        .query(bookmarksSql);
+        .query(cartsSql);
 
-      let bookmarkDetails = [];
-      if (bookmarksResults.recordset.length === 0) {
+      let cartDetails = [];
+      if (cartsResults.recordset.length === 0) {
         return res.send(
           '<script>alert("장바구니에 등록된 상품이 없습니다."); window.location.href = "/";</script>',
         );
       }
 
-      for (const bookmark of bookmarksResults.recordset) {
-        let typeSql = `SELECT * FROM bonggu.${bookmark.type} WHERE id = @productId`;
-        let typeParams = [bookmark.product_id];
+      for (const cart of cartsResults.recordset) {
+        let typeSql = `SELECT * FROM ${cart.type} WHERE id = @productId`;
+        let typeParams = [cart.product_id];
 
         const typeResults = await pool
           .request()
-          .input("productId", bookmark.product_id)
+          .input("productId", cart.product_id)
           .query(typeSql);
 
-        bookmarkDetails.push({
-          bookmark: bookmark,
+        cartDetails.push({
+          cart: cart,
           details: typeResults.recordset[0],
         });
       }
 
-      res.render("bookMarks.ejs", {
-        user: user.name,
-        data: bookmarkDetails,
+      res.render("carts.ejs", {
+        data: cartDetails,
+        user: req.session.user,
       });
     } catch (err) {
-      console.error("Error fetching bookmarks:", err);
+      console.error("Error fetching carts:", err);
       res.status(500).send("Internal Server Error");
     }
   } else {
@@ -227,20 +257,46 @@ app.get("/bookMarks", async function (req, res) {
   }
 });
 
+app.get("/community", async function (req, res) {
+  try {
+    const result = await pool.request().query("SELECT * FROM community");
+    const rows = result.recordset;
+    console.log(req.session.user);
+
+    for (const row of rows) {
+      const imagePath = path.join(
+        __dirname,
+        "public",
+        "preview_img",
+        row.preview_image,
+      );
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString("base64");
+
+      row.preview_image = base64Image;
+    }
+
+    res.render("community.ejs", { data: rows, user: req.session.user });
+  } catch (err) {
+    console.error("Error executing mssql query:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
 app.post("/signup_server", async function (req, res) {
   let sql =
-    "INSERT INTO `users` (`id`, `password`, `name`, `email`, `address`, `phone_number`, `type`) VALUES (@userid, @password, @username, @email, @address, @phone, 'user');";
-  let params = {
-    userid: req.body.userid,
-    password: req.body.password,
-    username: req.body.username,
-    email: req.body.email,
-    address: req.body.address,
-    phone: req.body.phone,
-  };
+    "INSERT INTO users ([id], [password], [name], [email], [address], [phone_number], [type]) VALUES (@userid, @password, @username, @email, @address, @phone, 'user');";
 
   try {
-    await pool.request().input(params).query(sql);
+    await pool
+      .request()
+      .input("userid", req.body.userid)
+      .input("password", req.body.password)
+      .input("username", req.body.username)
+      .input("email", req.body.email)
+      .input("address", req.body.address)
+      .input("phone", req.body.phone)
+      .query(sql);
     console.log("데이터 추가 성공");
   } catch (err) {
     console.error("Error inserting data:", err);
@@ -254,15 +310,19 @@ app.post("/signin_server", async function (req, res) {
   const password = req.body.password;
 
   let sql = "SELECT * FROM users WHERE id = @id AND password = @password";
-  let params = { id, password };
 
   try {
-    const result = await pool.request().input(params).query(sql);
+    const result = await pool
+      .request()
+      .input("id", req.body.userid)
+      .input("password", req.body.password)
+      .query(sql);
 
     if (result.recordset.length > 0) {
       console.log("로그인 성공");
       const name = result.recordset[0].name;
       req.session.user = { id, name };
+      console.log(req.session.user);
       res.redirect("/");
     } else {
       res.send(
@@ -275,14 +335,14 @@ app.post("/signin_server", async function (req, res) {
   }
 });
 
-app.post("/bookmark", async function (req, res) {
+app.post("/carts", async function (req, res) {
   const userId = res.locals.loggedInUser.id;
   const productId = req.body.productId;
   const registrationDate = req.body.registrationDate;
   const type = req.body.type;
 
   let checkExistenceSql =
-    "SELECT * FROM `bonggu`.`bookmarks` WHERE `user_id` = @userId AND `product_id` = @productId AND `type` = @type;";
+    "SELECT * FROM `carts` WHERE `user_id` = @userId AND `product_id` = @productId AND `type` = @type;";
 
   let checkExistenceParams = { userId, productId, type };
 
@@ -296,21 +356,21 @@ app.post("/bookmark", async function (req, res) {
       res.status(400).send("이미 장바구니에 있는 상품입니다.");
     } else {
       let insertSql =
-        "INSERT INTO `bonggu`.`bookmarks` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (@userId, @productId, @registrationDate, @type);";
+        "INSERT INTO `carts` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (@userId, @productId, @registrationDate, @type);";
 
       let insertParams = { userId, productId, registrationDate, type };
 
       await pool.request().input(insertParams).query(insertSql);
 
-      res.status(200).send("Bookmarked successfully");
+      res.status(200).send("carts successfully");
     }
   } catch (err) {
-    console.error("Error checking bookmark existence:", err);
+    console.error("Error checking carts existence:", err);
     res.status(500).send("Internal Server Error");
   }
 });
 
-app.get("/books/:type", async function (req, res) {
+app.get("/book/:type", async function (req, res) {
   const type = req.params.type;
 
   let sql = "";
@@ -323,7 +383,7 @@ app.get("/books/:type", async function (req, res) {
   } else if (type == "magazine") {
     sql = "SELECT * FROM books WHERE type = '매거진'";
   } else if (type == "picture") {
-    sql = "SELECT * FROM books WHERE type = '사진'";
+    sql = "SELECT * FROM boos WHERE type = '사진'";
   } else if (type == "postcardBook") {
     sql = "SELECT * FROM books WHERE type = '엽서북'";
   }
@@ -336,8 +396,8 @@ app.get("/books/:type", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "ex_photo",
-        row.preview_image_uri,
+        "preview_img",
+        row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
@@ -345,8 +405,7 @@ app.get("/books/:type", async function (req, res) {
       row.preview_image = base64Image;
     }
 
-    const user = res.locals.loggedInUser;
-    res.render("index.ejs", { data: rows, userName: user });
+    res.render("index.ejs", { data: rows, user: req.session.user });
   } catch (err) {
     console.error("Error executing MSSQL query:", err);
     res.status(500).send("Internal Server Error");
@@ -377,8 +436,8 @@ app.get("/goods/:type", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "ex_photo",
-        row.preview_image_uri,
+        "preview_img",
+        row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
@@ -387,29 +446,29 @@ app.get("/goods/:type", async function (req, res) {
     }
 
     const user = res.locals.loggedInUser;
-    res.render("index.ejs", { data: rows, userName: user });
+    res.render("index.ejs", { data: rows, user: req.session.user });
   } catch (err) {
     console.error("Error executing MSSQL query:", err);
     res.status(500).send("Internal Server Error");
   }
 });
 
-// app.get("/workshops/:type", async function (req, res) {
+// app.get("/worshop/:type", async function (req, res) {
 //   const type = req.params.type;
 
 //   let sql = "";
 //   if (type == "essay") {
 //     sql =
-//       "SELECT * FROM workshops WHERE type = '에세이' OR type = '소설' OR type = '문학'";
+//       "SELECT * FROM workshop WHERE type = '에세이' OR type = '소설' OR type = '문학'";
 //   } else if (type == "design") {
 //     sql =
-//       "SELECT * FROM workshops WHERE type = '디자인' OR type = '문화' OR type = '예술'";
+//       "SELECT * FROM workshop WHERE type = '디자인' OR type = '문화' OR type = '예술'";
 //   } else if (type == "magazine") {
-//     sql = "SELECT * FROM workshops WHERE type = '매거진'";
+//     sql = "SELECT * FROM workshop WHERE type = '매거진'";
 //   } else if (type == "picture") {
-//     sql = "SELECT * FROM workshops WHERE type = '사진'";
+//     sql = "SELECT * FROM workshop WHERE type = '사진'";
 //   } else if (type == "postcardBook") {
-//     sql = "SELECT * FROM workshops WHERE type = '엽서북'";
+//     sql = "SELECT * FROM workshop WHERE type = '엽서북'";
 //   }
 
 //   try {
@@ -420,8 +479,8 @@ app.get("/goods/:type", async function (req, res) {
 //       const imagePath = path.join(
 //         __dirname,
 //         "public",
-//         "ex_photo",
-//         row.preview_image_uri,
+//         "preview_img",
+//         row.preview_image,
 //       );
 //       const imageBuffer = fs.readFileSync(imagePath);
 //       const base64Image = imageBuffer.toString("base64");
@@ -429,8 +488,7 @@ app.get("/goods/:type", async function (req, res) {
 //       row.preview_image = base64Image;
 //     }
 
-//     const user = res.locals.loggedInUser;
-//     res.render("index.ejs", { data: rows, userName: user });
+//     res.render("index.ejs", { data: rows,  user: req.session.user });
 //   } catch (err) {
 //     console.error("Error executing MSSQL query:", err);
 //     res.status(500).send("Internal Server Error");
@@ -438,40 +496,44 @@ app.get("/goods/:type", async function (req, res) {
 // });
 
 app.get("/login", function (req, res) {
-  res.render("login.ejs");
+  res.render("login.ejs", { user: req.session.user });
 });
 
 app.get("/signup", function (req, res) {
-  res.render("signup.ejs");
+  res.render("signup.ejs", { user: req.session.user });
 });
 
-app.post("/bookmark", function (req, res) {
+app.get("/community", function (req, res) {
+  res.render("community.ejs", { user: req.session.user });
+});
+
+app.post("/carts", function (req, res) {
   const userId = res.locals.loggedInUser.id;
   const productId = req.body.productId;
   const registrationDate = req.body.registrationDate;
   const type = req.body.type;
 
   let checkExistenceSql =
-    "SELECT * FROM `bonggu`.`bookmarks` WHERE `user_id` = ? AND `product_id` = ? AND `type` = ?;";
+    "SELECT * FROM `carts` WHERE `user_id` = ? AND `product_id` = ? AND `type` = ?;";
 
   let checkExistenceParams = [userId, productId, type];
 
   conn.query(checkExistenceSql, checkExistenceParams, function (err, results) {
     if (err) {
-      console.error("Error checking bookmark existence:", err);
+      console.error("Error checking carts existence:", err);
       res.status(500).send("Internal Server Error");
     } else {
       if (results.length > 0) {
         res.status(400).send("이미 장바구니에 있는 상품입니다.");
       } else {
         let insertSql =
-          "INSERT INTO `bonggu`.`bookmarks` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (?, ?, ?, ?);";
+          "INSERT INTO `carts` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (?, ?, ?, ?);";
 
         let insertParams = [userId, productId, registrationDate, type];
 
         conn.query(insertSql, insertParams, function (err, result) {
           if (err) {
-            console.error("Error inserting bookmark:", err);
+            console.error("Error inserting carts:", err);
             res.status(500).send("Internal Server Error");
           } else {
             res.status(200).send("Book marked successfully");
@@ -491,7 +553,7 @@ app.post("/purchase", async function (req, res) {
       console.log("Selected item ID:", item.id);
       console.log("Selected item type:", item.type);
 
-      const checkQuantitySql = `SELECT remaining_quantity FROM bonggu.${item.type} WHERE id = @productId;`;
+      const checkQuantitySql = `SELECT remaining_quantity FROM ${item.type} WHERE id = @productId;`;
       const checkQuantityResult = await pool
         .request()
         .input("productId", item.id)
@@ -506,9 +568,8 @@ app.post("/purchase", async function (req, res) {
 
       await updatePurchaseHistory(userId, item.id, item.type);
 
-      const deleteBookmarkSql =
-        "DELETE FROM bonggu.bookmarks WHERE id = @productId;";
-      await pool.request().input("productId", item.id).query(deleteBookmarkSql);
+      const deletecartsSql = "DELETE FROM carts WHERE id = @productId;";
+      await pool.request().input("productId", item.id).query(deletecartsSql);
 
       await updateQuantity(item);
     }
@@ -523,7 +584,7 @@ app.post("/purchase", async function (req, res) {
 app.post("/search", async function (req, res) {
   const searchTerm = req.body.searchTerm;
   console.log(searchTerm);
-  const searchQuery = "SELECT * FROM bonggu.books WHERE title LIKE @searchTerm";
+  const searchQuery = "SELECT * FROM books WHERE title LIKE @searchTerm";
 
   const searchResults = [];
 
@@ -543,8 +604,11 @@ app.post("/search", async function (req, res) {
       });
     });
 
-    // Render the searchResults.ejs template with the data
-    res.render("search.ejs", { searchTerm, data: searchResults });
+    res.render("search.ejs", {
+      searchTerm,
+      data: searchResults,
+      user: req.session.user,
+    });
   } catch (err) {
     console.error("Error executing MSSQL query:", err);
     return res.status(500).send("Internal Server Error");
@@ -559,7 +623,7 @@ const updatePurchaseHistory = async (userId, productId, type) => {
   const purchaseDate = `${year}-${month}-${day}`;
 
   const insertHistorySql =
-    "INSERT INTO `bonggu`.`purchase_history` (`user_id`, `product_id`, `purchase_date`, `type`) VALUES (@userId, @productId, @purchaseDate, @type);";
+    "INSERT INTO `purchase_history` (`user_id`, `product_id`, `purchase_date`, `type`) VALUES (@userId, @productId, @purchaseDate, @type);";
 
   const insertHistoryParams = {
     userId,
@@ -577,8 +641,7 @@ const updatePurchaseHistory = async (userId, productId, type) => {
 };
 
 const updateQuantity = async (item) => {
-  // Update quantity
-  const updateQuantitySql = `UPDATE bonggu.${item.type} SET remaining_quantity = remaining_quantity - 1 WHERE id = @productId;`;
+  const updateQuantitySql = `UPDATE ${item.type} SET remaining_quantity = remaining_quantity - 1 WHERE id = @productId;`;
 
   try {
     await pool.request().input("productId", item.id).query(updateQuantitySql);

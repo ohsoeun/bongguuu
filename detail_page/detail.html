@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title></title>
-    <link rel="stylesheet" href="C:\Users\user\Desktop\detail_page\style\detail_style.css">
+    <link rel="stylesheet" href="/detail_page/style/detail_style.css">
 </head>
 <body>
 
     <header>
         <a href="index.html">
-            <img src="C:\Users\user\Desktop\detail_page\header_logo\bongu_logo.jpg" alt="Header Image">
+            <img src="/detail_page/header_logo/bongu_logo.jpg" alt="Header Image">
         </a>
        
         <div class="header-links">
@@ -60,7 +60,7 @@
     </nav>
 
     <div class="book-details">
-        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege.png" alt="상세페이지 대표사진">
+        <img src="/detail_page/image/vege/vege.png" alt="상세페이지 대표사진">
         <div class="book-info">
             <h2>도서 제목</h2>
             <p>저자: 작가명</p>
@@ -88,12 +88,12 @@
     </detail-nav>
 
     <div class="detail-images" id="detail-images">
-        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_1.jpg" alt="test1">
-        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_2.jpg" alt="test2">
-        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_3.jpg" alt="test3">
-        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_4.jpg" alt="test4">
-        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_5.jpg" alt="test5">
-        <img src="C:\Users\user\Desktop\detail_page\image\vege\vege_6.jpg" alt="test6">
+        <img src="/detail_page/image/vege/vege_1.jpg" alt="test1">
+        <img src="/detail_page/image/vege/vege_2.jpg" alt="test2">
+        <img src="/detail_page/image/vege/vege_3.jpg" alt="test3">
+        <img src="/detail_page/image/vege/vege_4.jpg" alt="test4">
+        <img src="/detail_page/image/vege/vege_5.jpg" alt="test5">
+        <img src="/detail_page/image/vege/vege_6.jpg" alt="test6">7
     </div>
 
     <div class="etc">
@@ -168,6 +168,72 @@
             </p>
         </div>
     </footer>
-    <script src=C:\Users\user\Desktop\detail_page\script\script.js defer></script>
+    <script src=/detail_page/image/vege/vege.png defer></script>
 
 </html>
+
+USE bonggu;
+
+INSERT INTO books 
+  (title, author, summary, preview_image, type, price, remaining_quantity)
+VALUES 
+  ('채소에 대한 허무맹랑하고 쓸데없는 상상들', '하현', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'vega.png', 'product1.jpg', '소설', 5000, 0),
+  ('제목1', '저자1', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product1.jpg', '소설', 5000, 0),
+  ('제목2', '저자2', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product2.jpg', '예술', 6000, 500),
+  ('제목3', '저자3', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product3.jpg', '사진', 10000, 400),
+  ('제목4', '저자4', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product4.jpg', '소설', 5500, 900),
+  ('제목5', '저자5', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product5.jpg', '사진', 8500, 800),
+  ('제목6', '저자6', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product6.jpg', '매거진', 9000, 900),
+  ('제목7', '저자7', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product7.jpg', '디자인', 6500, 1000),
+  ('제목8', '저자8', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product8.jpg', '엽서북', 7000, 200),
+  ('제목9', '저자9', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product9.jpg', '매거진', 5000, 700),
+  ('제목10', '저자10', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product10.jpg', '엽서북', 8500, 600),
+  ('제목11', '저자11', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product11.jpg', '에세이', 10000, 300),
+  ('제목12', '저자12', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product12.jpg', '문학', 7000, 800),
+  ('제목13', '저자13', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product13.jpg', '사진', 6500, 400),
+  ('제목14', '저자14', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product14.jpg', '문화', 8000, 900),
+  ('제목15', '저자15', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product15.jpg', '소설', 6000, 600),
+  ('제목16', '저자16', '도서에 대한 간략한 설명이 여기에 들어갑니다.', 'product16.jpg', '디자인', 7500, 100);
+
+
+INSERT INTO goods 
+  (title, author, summary, preview_image, type, price, remaining_quantity)
+VALUES 
+  ('Walking Through', '작가명', '상세정보1', 'product1.jpg', 'product1.jpg', '엽서', 10000, 100),
+  ('상품1', '저자1', '상세정보1', 'product1.jpg', '스티커', 1000, 0),
+  ('상품2', '저자2', '상세정보2', 'product2.jpg', '메모지', 5000, 100),
+  ('상품3', '저자3', '상세정보3', 'product3.jpg', '펜', 2500, 600),
+  ('상품4', '저자4', '상세정보4', 'product4.jpg', '포스터', 3000, 800),
+  ('상품5', '저자5', '상세정보5', 'product5.jpg', '뱃지', 3000, 200),
+  ('상품6', '저자6', '상세정보6', 'product6.jpg', '달력', 6500, 10000),
+  ('상품7', '저자7', '상세정보7', 'product7.jpg', '티셔츠', 7500, 600),
+  ('상품8', '저자8', '상세정보8', 'product8.jpg', '노트', 3000, 200),
+  ('상품9', '저자9', '상세정보9', 'product9.jpg', '스티커', 1500, 800),
+  ('상품10', '저자10', '상세정보10', 'product10.jpg', '뱃지', 2000, 100),
+  ('상품11', '저자11', '상세정보11', 'product11.jpg', '엽서', 1000, 900),
+  ('상품12', '저자12', '상세정보12', 'product12.jpg', '달력', 4000, 800),
+  ('상품13', '저자13', '상세정보13', 'product13.jpg', '메모지', 500, 500),
+  ('상품14', '저자14', '상세정보14', 'product14.jpg', '펜', 3500, 700),
+  ('상품15', '저자15', '상세정보15', 'product15.jpg', '포스터', 2500, 300),
+  ('상품16', '저자16', '상세정보16', 'product16.jpg', '노트', 5500, 500);
+
+
+INSERT INTO workshops 
+  (title, author, summary, preview_image, type, price, remaining_quantity, date)
+VALUES 
+  ('워크숍1', '저자1', '상세정보1', 'product1.jpg', '서평', 8000, 30, 2024.01.01),
+  ('워크숍2', '저자2', '상세정보2', 'product2.jpg', '서평', 6000, 20, 2024.01.01),
+  ('워크숍3', '저자3', '상세정보3', 'product3.jpg', '서평', 5500, 40, 2023.01.01),
+  ('워크숍4', '저자4', '상세정보4', 'product4.jpg', '서평', 6500, 50, 2024.01.01),
+  ('워크숍5', '저자5', '상세정보5', 'product5.jpg', '서평', 7000, 30, 2024.01.01),
+  ('워크숍6', '저자6', '상세정보6', 'product6.jpg', '서평', 5000, 20, 2024.01.01),
+  ('워크숍7', '저자7', '상세정보7', 'product7.jpg', '서평', 7500, 40, 2023.01.01),
+  ('워크숍8', '저자8', '상세정보8', 'product8.jpg', '서평', 10000, 20, 2024.01.01),
+  ('워크숍9', '저자9', '상세정보9', 'product9.jpg', '서평', 8500, 20, 2024.01.01),
+  ('워크숍10', '저자10', '상세정보10', 'product10.jpg', '서평', 7000, 50, 2024.01.01),
+  ('워크숍11', '저자11', '상세정보11', 'product11.jpg', '서평', 9000, 30, 2023.01.01),
+  ('워크숍12', '저자12', '상세정보12', 'product12.jpg', '서평', 5500, 20, 2024.01.01),
+  ('워크숍13', '저자13', '상세정보13', 'product13.jpg', '서평', 6500, 40, 2024.01.01),
+  ('워크숍14', '저자14', '상세정보14', 'product14.jpg', '서평', 9500, 40, 2024.01.01),
+  ('워크숍15', '저자15', '상세정보15', 'product15.jpg', '서평', 7000, 30, 2024.01.01),
+  ('워크숍16', '저자16', '상세정보16', 'product16.jpg', '서평', 5500, 30, 2024.01.01);

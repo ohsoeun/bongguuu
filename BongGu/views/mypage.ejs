@@ -11,34 +11,77 @@
     <section id="mypage-content">
       <div class="profile-form-container">
         <h2>프로필</h2>
+        <!-- <h1><% console.log(user) %></h1> -->
         <!-- Edit Profile Form -->
         <form id="edit-profile-form">
-          <label for="new-email"> ID:</label>
-          <input type="email" id="new-email" name="new-email" required />
+          <label for="new-id"> ID:</label>
+          <input
+            type="text"
+            id="new-id"
+            name="new-id"
+            value="<%= user.id %>"
+            required
+            readonly
+          />
 
-          <label for="new-email"> Password</label>
-          <input type="email" id="new-email" name="new-email" required />
+          <label for="new-password"> Password</label>
+          <input
+            type="password"
+            id="new-password"
+            name="new-password"
+            required
+          />
 
           <label for="new-name"> 이름:</label>
-          <input type="text" id="new-name" name="new-name" required />
+          <input
+            type="text"
+            id="new-name"
+            name="new-name"
+            value="<%= user.name %>"
+            required
+          />
 
           <label for="new-email"> 이메일:</label>
-          <input type="email" id="new-email" name="new-email" required />
+          <input
+            type="email"
+            id="new-email"
+            name="new-email"
+            value="<%= user.email %>"
+            required
+          />
 
-          <label for="new-email"> 전화번호:</label>
-          <input type="email" id="new-email" name="new-email" required />
+          <label for="new-phone"> 전화번호:</label>
+          <input
+            type="tel"
+            id="new-phone"
+            name="new-phone"
+            value="<%= user.phone_number %>"
+            required
+          />
 
-          <label for="new-email"> 주소:</label>
-          <input type="email" id="new-email" name="new-email" required />
+          <label for="new-address"> 주소:</label>
+          <input
+            type="text"
+            id="new-address"
+            name="new-address"
+            value="<%= user.address %>"
+            required
+          />
         </form>
       </div>
-
       <div class="order-history">
         <h2>주문 내역</h2>
         <ul>
-          <li>주문 번호: 1234 | 도서 제목: 책 제목 1 | 가격: $20</li>
-          <li>주문 번호: 5678 | 도서 제목: 책 제목 2 | 가격: $25</li>
-          <!-- Add more order details as needed -->
+          <% for(let i = 0; i < user.purchase_history.length; i++) { %>
+          <li>
+            상품 제목: <%= user.purchase_history[i].product_title %> | 구매
+            날짜: <%=
+            user.purchase_history[i].purchase_date.toLocaleDateString('en-US', {
+            year: 'numeric', month: '2-digit', day: '2-digit' }) %> | 가격: <%=
+            user.purchase_history[i].price ?
+            `${user.purchase_history[i].price}원` : '가격 정보 없음' %>
+          </li>
+          <% } %>
         </ul>
       </div>
 
@@ -70,13 +113,7 @@
           </form>
         </div>
 
-        <!-- Change Password Button -->
-        <a
-          href="#"
-          class="edit-password-button"
-          onclick="showChangePasswordForm()"
-          >비밀번호 변경</a
-        >
+        <a href="#" class="edit-password-button" onclick="logout()">로그아웃</a>
 
         <!-- Change Password Form Container -->
         <div id="password-form-container" style="display: none">
@@ -106,7 +143,6 @@
               required
             />
 
-            <!-- Change Password Button -->
             <button
               type="button"
               class="edit-password-button"
@@ -121,5 +157,24 @@
 
     <%- include('bt_nav.html') %>
     <script src="/js/script.js" defer></script>
+    <script>
+      function logout() {
+        fetch("/logout", {
+          method: "POST",
+          credentials: "include",
+        })
+          .then((response) => {
+            if (response.ok) {
+              alert("로그아웃되었습니다.");
+              window.location.href = "/";
+            } else {
+              console.error("Logout failed");
+            }
+          })
+          .catch((error) => {
+            console.error("Error during logout:", error);
+          });
+      }
+    </script>
   </body>
 </html>

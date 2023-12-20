@@ -11,7 +11,7 @@
     <section class="products">
       <% for (let i = 0; i < data.length; i++) { %>
       <div class="product">
-        <a href="/content/<%= data[i].id %>">
+        <a href="/content/<%= data[i].id %>/<%= data[i].product_type %>">
           <img
             src="data:image/jpeg;base64,<%= data[i].preview_image %>"
             alt="<%= data[i].title %> Preview"

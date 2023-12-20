@@ -32,8 +32,8 @@
           <input type="text" name="quantity" value="1" readonly />
           <button type="button" onclick="changeQuantity(1)">╋</button>
         </div>
-        <button class="buy" onclick="buy()">구매하기</button>
-        <button class="list-buy" onclick="listBuy()">장바구니 담기</button>
+        <button class="buy">구매하기</button>
+        <button class="list-buy">장바구니 담기</button>
       </div>
     </div>
 
@@ -100,39 +100,62 @@
     </div>
 
     <footer></footer>
-    <script src="/js/script.js" defer></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-      function buy() {
-        if ("<%= user %>") {
-          const quantity = document.querySelector(
-            "input[name='quantity']",
-          ).value;
+      $(document).ready(function () {
+        $(".buy").click(function () {
+          if ("<%= user %>") {
+            const quantity = $("input[name='quantity']").val();
 
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", "/buy");
-          xhr.setRequestHeader("Content-Type", "application/json");
-          xhr.send(JSON.stringify({ quantity }));
-        } else {
-          alert("로그인이 필요합니다.");
-          window.location.href = "/login";
-        }
-      }
+            $.ajax({
+              type: "POST",
+              url: "/buy",
+              data: JSON.stringify({ quantity }),
+              contentType: "application/json",
+              success: function (response) {
+                alert("구매가 완료되었습니다.");
+                location.reload();
+              },
+              error: function (xhr) {
+                if (xhr.status === 400) {
+                  alert("수량이 부족합니다.");
+                } else {
+                  console.error(xhr.statusText);
+                }
+              },
+            });
+          } else {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/login";
+          }
+        });
 
-      function listBuy() {
-        if ("<%= user %>") {
-          const quantity = document.querySelector(
-            "input[name='quantity']",
-          ).value;
+        $(".list-buy").click(function () {
+          if ("<%= user %>") {
+            const quantity = $("input[name='quantity']").val();
 
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", "/cart");
-          xhr.setRequestHeader("Content-Type", "application/json");
-          xhr.send(JSON.stringify({ quantity }));
-        } else {
-          alert("로그인이 필요합니다.");
-          window.location.href = "/login";
-        }
-      }
+            $.ajax({
+              type: "POST",
+              url: "/cart",
+              data: JSON.stringify({ quantity }),
+              contentType: "application/json",
+              success: function (response) {
+                alert("장바구니에 추가되었습니다.");
+              },
+              error: function (xhr) {
+                if (xhr.status === 400) {
+                  alert("이미 장바구니에 있는 상품입니다.");
+                } else {
+                  console.error(xhr.statusText);
+                }
+              },
+            });
+          } else {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/login";
+          }
+        });
+      });
     </script>
     <%- include('bt_nav.html') %>
   </body>

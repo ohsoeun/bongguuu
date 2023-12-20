@@ -98,3 +98,9 @@ CREATE TABLE product_images (
     product_id INT NOT NULL,
     image VARCHAR(255) NOT NULL,
 );
+
+CREATE TABLE main_images (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    product_id INT NOT NULL,
+    image VARCHAR(255) NOT NULL,
+);

@@ -3,81 +3,101 @@
   <head>
     <meta charset="UTF-8" />
     <title>장바구니</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9"
+      crossorigin="anonymous"
+    />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
     <%- include('nav.html') %>
-    <h1>장바구니</h1>
-
-    <form id="purchaseForm">
-      <section class="products">
-        <% data.forEach((carts) => { %>
-        <label class="product">
-          <input
-            type="checkbox"
-            name="selectedItems"
-            value="<%= carts.id %>"
-            data-type="<%= carts.type %>"
-          />
-          <h2><%= carts.details.title %></h2>
-          <p>저자: <%= carts.details.author %></p>
-          <img
-            src="/ex_photo/<%= carts.details.preview_image_uri %>"
-            alt="<%= carts.details.title %> Preview"
-          />
-          <p>가격: <%= carts.details.price %>원</p>
-          <p>남은 수량: <%= carts.details.remaining_quantity %></p>
-        </label>
-        <% }); %>
-      </section>
-      <button type="button" id="purchaseButton">선택한 상품 구매하기</button>
-    </form>
+    <div class="container mb-2">
+      <form id="purchaseForm">
+        <section class="products">
+          <ul class="list-group">
+            <% data.forEach((carts) => { %>
+            <li
+              class="list-group-item d-flex justify-content-between align-items-start"
+            >
+              <label class="form-check-label fw-bold" for="<%= carts.cart.id %>"
+                ><%= carts.details.title %>
+                <div class="fw">저자: <%= carts.details.author %></div>
+                <small><%= carts.details.price %>원</small>
+              </label>
+              <% if (carts.details.remaining_quantity > carts.cart.quantity) {
+              %>
+              <input
+                class="form-check-input me-1"
+                type="checkbox"
+                value="<%= carts.cart.quantity %>-<%= carts.cart.type %>"
+                id="<%= carts.details.id %>"
+              />
+              <% } else { %>
+              <input
+                class="form-check-input me-1"
+                type="checkbox"
+                value="<%= carts.cart.quantity %>"
+                id="<%= carts.cart.id %>"
+                disabled
+              />
+              <% } %>
+            </li>
+            <% }) %>
+          </ul>
+        </section>
+        <button type="button" class="btn btn-primary" id="purchaseBtn">
+          선택한 상품 구매하기
+        </button>
+      </form>
+    </div>
 
     <footer></footer>
     <script src="/js/script.js" defer></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-      document
-        .getElementById("purchaseButton")
-        .addEventListener("click", function () {
-          const selectedItems = Array.from(
-            document.querySelectorAll('input[name="selectedItems"]:checked'),
-          ).map((checkbox) => {
-            return {
-              id: checkbox.value,
-              type: checkbox.dataset.type,
+      $(document).ready(function () {
+        $("#purchaseBtn").click(function () {
+          var selectedItems = [];
+
+          $(".form-check-input:checked").each(function () {
+            console.log($(this));
+            var item = {
+              id: $(this).attr("id"),
+              data: $(this).val(),
             };
+            selectedItems.push(item);
           });
 
-          fetch("/purchase", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+          if (selectedItems.length === 0) {
+            alert("상품을 선택해 주세요.");
+            return; // 선택한 아이템이 없으면 함수 종료
+          }
+
+          selectedItems = selectedItems.filter((item) => item.id.trim() !== "");
+
+          $.ajax({
+            type: "POST",
+            url: "/purchase",
+            data: JSON.stringify(selectedItems),
+            contentType: "application/json",
+            success: function (response) {
+              alert("구매 완료하였습니다.");
+              location.reload();
             },
-            body: JSON.stringify({ selectedItems }),
-          })
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error("Network response was not ok");
-              }
-              return response.json();
-            })
-            .then((data) => {
-              console.log("Server response:", data);
-              if (data.success) {
-                alert(data.message);
-              }
-              const selectedCheckboxes = document.querySelectorAll(
-                'input[name="selectedItems"]:checked',
-              );
-              selectedCheckboxes.forEach((checkbox) => {
-                checkbox.closest(".product").remove();
-              });
-            })
-            .catch((error) => {
-              console.error("Error during fetch operation:", error);
-            });
+            error: function (error) {
+              console.error(error);
+            },
+          });
         });
+      });
     </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+      crossorigin="anonymous"
+    ></script>
   </body>
-  <%- include('bt_nav.html') %>
+  <!-- <%- include('bt_nav.html') %> -->
 </html>

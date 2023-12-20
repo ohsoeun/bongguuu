@@ -146,7 +146,6 @@ app.get("/content/:id/:product_type", async function (req, res) {
   JOIN main_images ON ${productType}.id = main_images.product_id
   WHERE ${productType}.id = @productId;
   `;
-  let sql1 = `SELECT * FROM ${productType} WHERE id = @productId`;
   let img_sql = "SELECT * FROM product_images WHERE product_id = @productId";
   try {
     const result = await pool
@@ -224,16 +223,27 @@ app.get("/carts", async function (req, res) {
 
       for (const cart of cartsResults.recordset) {
         let typeSql = `SELECT * FROM ${cart.type} WHERE id = @productId`;
-        let typeParams = [cart.product_id];
 
         const typeResults = await pool
           .request()
           .input("productId", cart.product_id)
           .query(typeSql);
 
+        const productInfo = typeResults.recordset[0];
+        const imagePath = path.join(
+          __dirname,
+          "public",
+          "img_preview",
+          productInfo.preview_image,
+        );
+        const imageBuffer = fs.readFileSync(imagePath);
+        const base64Image = imageBuffer.toString("base64");
+
+        productInfo.preview_image = base64Image;
+
         cartDetails.push({
           cart: cart,
-          details: typeResults.recordset[0],
+          details: productInfo,
         });
       }
 
@@ -282,8 +292,58 @@ app.get("/info", function (req, res) {
   res.render("info.ejs", { user: req.session.user });
 });
 
-app.get("/mypage", function (req, res) {
-  res.render("mypage.ejs", { user: req.session.user });
+app.get("/mypage", async function (req, res) {
+  const userId = req.session.user.id;
+
+  try {
+    const query = `
+      SELECT u.id, u.name, u.email, u.phone_number, u.address, ph.purchase_date, ph.product_id, ph.type,
+             COALESCE(b.title, g.title, w.title) AS product_title,
+             COALESCE(b.price, g.price, w.price) AS price
+      FROM users u
+      LEFT JOIN purchase_history ph ON u.id = ph.user_id
+      LEFT JOIN books b ON ph.product_id = b.id AND ph.type = 'books'
+      LEFT JOIN goods g ON ph.product_id = g.id AND ph.type = 'goods'
+      LEFT JOIN workshops w ON ph.product_id = w.id AND ph.type = 'workshops'
+      WHERE u.id = @userId
+    `;
+
+    const result = await pool.request().input("userId", userId).query(query);
+
+    console.log(result.recordset[0]);
+    const user = {
+      id: result.recordset[0].id,
+      name: result.recordset[0].name,
+      email: result.recordset[0].email,
+      phone_number: result.recordset[0].phone_number,
+      address: result.recordset[0].address,
+      purchase_history: result.recordset.map((row) => ({
+        purchase_date: row.purchase_date,
+        product_id: row.product_id,
+        type: row.type,
+        product_title: row.product_title,
+        price: row.price,
+      })),
+    };
+    res.render("mypage.ejs", { user });
+  } catch (error) {
+    console.error(
+      "Error fetching user information and purchase history:",
+      error,
+    );
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error destroying session:", err);
+      res.status(500).send("Internal Server Error");
+    } else {
+      res.sendStatus(200);
+    }
+  });
 });
 
 app.post("/signup_server", async function (req, res) {
@@ -340,28 +400,44 @@ app.post("/signin_server", async function (req, res) {
 
 app.post("/cart", async function (req, res) {
   const user = req.session.user;
-
   const quantity = req.body.quantity;
   const get_url = req.headers.referer;
   const product_id = get_url.split("/")[4];
   const product_type = get_url.split("/")[5];
-  console.log("url: " + get_url);
-  console.log("product id: " + product_id);
-  let sql =
-    "INSERT INTO carts (user_id, product_id, registration_date, quantity, type) VALUES (@user_id, @product_id, GETDATE(), @quantity, @type)";
+
+  // Check if the product is already in the cart
+  const checkCartQuery =
+    "SELECT * FROM carts WHERE user_id = @user_id AND product_id = @product_id AND type = @type";
 
   try {
-    await pool
+    const checkCartResult = await pool
       .request()
       .input("user_id", user.id)
       .input("product_id", product_id)
-      .input("quantity", quantity)
       .input("type", product_type)
-      .query(sql);
-    console.log("장바구니 추가 성공");
-    res.send('<script>alert("장바구니에 추가하였습니다.");</script>');
+      .query(checkCartQuery);
+
+    if (checkCartResult.recordset.length > 0) {
+      // Product is already in the cart
+      console.log("Product is already in the cart");
+      res.status(400).send("Product already in the cart");
+    } else {
+      const insertCartQuery =
+        "INSERT INTO carts (user_id, product_id, registration_date, quantity, type) VALUES (@user_id, @product_id, GETDATE(), @quantity, @type)";
+
+      await pool
+        .request()
+        .input("user_id", user.id)
+        .input("product_id", product_id)
+        .input("quantity", quantity)
+        .input("type", product_type)
+        .query(insertCartQuery);
+
+      console.log("장바구니 추가 성공");
+      res.send('<script>alert("장바구니에 추가하였습니다.");</script>');
+    }
   } catch (err) {
-    console.error("Error inserting data:", err);
+    console.error("Error processing cart:", err);
     res.status(500).send("Internal Server Error");
   }
 });
@@ -369,7 +445,55 @@ app.post("/cart", async function (req, res) {
 app.post("/buy", async function (req, res) {
   const user = req.session.user;
   const quantity = req.body.quantity;
-  const product_id = req.url.sqlit("/")[2];
+  const get_url = req.headers.referer;
+  const product_id = get_url.split("/")[4];
+  const product_type = get_url.split("/")[5];
+
+  try {
+    // Check if the product quantity is sufficient
+    const checkQuantityQuery = `SELECT remaining_quantity FROM ${product_type} WHERE id = @product_id`;
+    const checkQuantityResult = await pool
+      .request()
+      .input("product_id", product_id)
+      .query(checkQuantityQuery);
+
+    const availableQuantity =
+      checkQuantityResult.recordset[0].remaining_quantity;
+
+    if (availableQuantity < quantity) {
+      // Insufficient quantity
+      console.log("Insufficient quantity");
+      res.status(400).send("Insufficient quantity");
+      return;
+    }
+
+    // Update the quantity in the books table
+    const updateQuantityQuery = `UPDATE ${product_type} SET remaining_quantity = remaining_quantity - @quantity WHERE id = @product_id`;
+    await pool
+      .request()
+      .input("quantity", quantity)
+      .input("product_id", product_id)
+      .query(updateQuantityQuery);
+
+    // Insert into purchase_history table
+    const insertPurchaseQuery = `
+      INSERT INTO purchase_history (user_id, product_id, purchase_date, type)
+      VALUES (@user_id, @product_id, GETDATE(), @type)
+    `;
+
+    await pool
+      .request()
+      .input("user_id", user.id)
+      .input("product_id", product_id)
+      .input("type", product_type)
+      .query(insertPurchaseQuery);
+
+    console.log("Purchase successful");
+    res.status(200).send("Purchase successful");
+  } catch (err) {
+    console.error("Error processing purchase:", err);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 app.get("/book/:type", async function (req, res) {
@@ -509,74 +633,64 @@ app.get("/community", function (req, res) {
   res.render("community.ejs", { user: req.session.user });
 });
 
-app.post("/carts", function (req, res) {
-  const userId = res.locals.loggedInUser.id;
-  const productId = req.body.productId;
-  const registrationDate = req.body.registrationDate;
-  const type = req.body.type;
-
-  let checkExistenceSql =
-    "SELECT * FROM `carts` WHERE `user_id` = ? AND `product_id` = ? AND `type` = ?;";
-
-  let checkExistenceParams = [userId, productId, type];
-
-  conn.query(checkExistenceSql, checkExistenceParams, function (err, results) {
-    if (err) {
-      console.error("Error checking carts existence:", err);
-      res.status(500).send("Internal Server Error");
-    } else {
-      if (results.length > 0) {
-        res.status(400).send("이미 장바구니에 있는 상품입니다.");
-      } else {
-        let insertSql =
-          "INSERT INTO `carts` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (?, ?, ?, ?);";
-
-        let insertParams = [userId, productId, registrationDate, type];
-
-        conn.query(insertSql, insertParams, function (err, result) {
-          if (err) {
-            console.error("Error inserting carts:", err);
-            res.status(500).send("Internal Server Error");
-          } else {
-            res.status(200).send("Book marked successfully");
-          }
-        });
-      }
-    }
-  });
-});
-
 app.post("/purchase", async function (req, res) {
-  const userId = res.locals.loggedInUser.id;
-  const selectedItems = req.body.selectedItems;
+  const user = req.session.user;
+  const selectedItems = req.body;
 
   try {
     for (const item of selectedItems) {
-      console.log("Selected item ID:", item.id);
-      console.log("Selected item type:", item.type);
+      const [quantity, type] = item.data.split("-");
 
-      const checkQuantitySql = `SELECT remaining_quantity FROM ${item.type} WHERE id = @productId;`;
-      const checkQuantityResult = await pool
+      // Update books table
+      const updateQuery = `
+        UPDATE ${type}
+        SET remaining_quantity = remaining_quantity - @quantity
+        WHERE id = @id
+      `;
+
+      await pool
         .request()
-        .input("productId", item.id)
-        .query(checkQuantitySql);
+        .input("quantity", quantity)
+        .input("id", item.id)
+        .query(updateQuery);
 
-      if (checkQuantityResult.recordset[0].remaining_quantity <= 0) {
-        return res.status(400).json({
-          success: false,
-          alertMessage: "상품의 남은 수량이 없습니다.",
-        });
-      }
+      // Insert into purchase_history table
+      const insertQuery = `
+        INSERT INTO purchase_history (user_id, product_id, purchase_date, type)
+        VALUES (@user_id, @product_id, GETDATE(), @type)
+      `;
 
-      await updatePurchaseHistory(userId, item.id, item.type);
+      await pool
+        .request()
+        .input("user_id", user.id) // Assuming user has an 'id' property
+        .input("product_id", item.id)
+        .input("type", type)
+        .query(insertQuery);
 
-      const deletecartsSql = "DELETE FROM carts WHERE id = @productId;";
-      await pool.request().input("productId", item.id).query(deletecartsSql);
+      const deleteQuery = `
+          DELETE FROM carts
+          WHERE user_id = @user_id AND product_id = @product_id
+        `;
 
-      await updateQuantity(item);
+      console.log("Attempting to delete from carts table...");
+      console.log(
+        "Delete query parameters - user_id:",
+        user.id,
+        "product_id:",
+        item.id,
+      );
+
+      const deleteResult = await pool
+        .request()
+        .input("user_id", user.id)
+        .input("product_id", item.id)
+        .query(deleteQuery);
+      console.log("Delete query result:", deleteResult);
+
+      console.log("Deletion from carts table successful.");
     }
 
-    res.json({ success: true, message: "구매가 완료되었습니다." });
+    res.status(200).send("Purchase request received successfully.");
   } catch (error) {
     console.error("Error processing selected items:", error);
     res.status(500).json({ error: "Error processing selected items" });
@@ -597,6 +711,17 @@ app.post("/search", async function (req, res) {
       .query(searchQuery);
 
     results.recordset.forEach((result) => {
+      const imagePath = path.join(
+        __dirname,
+        "public",
+        "img_preview",
+        result.preview_image,
+      );
+      const imageBuffer = fs.readFileSync(imagePath);
+      const base64Image = imageBuffer.toString("base64");
+
+      result.preview_image = base64Image;
+
       searchResults.push({
         id: result.id,
         preview_image: result.preview_image,
@@ -606,6 +731,7 @@ app.post("/search", async function (req, res) {
       });
     });
 
+    console.log(searchResults);
     res.render("search.ejs", {
       searchTerm,
       data: searchResults,

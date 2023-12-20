@@ -30,7 +30,6 @@ app.use(
     saveUninitialized: true,
   }),
 );
-app.use(checkLoginStatus);
 
 const config = {
   user: "sa",
@@ -68,7 +67,7 @@ app.get("/", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "preview_img",
+        "img_preview",
         row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
@@ -89,12 +88,13 @@ app.get("/goods", async function (req, res) {
   try {
     const result = await pool.request().query(sql);
     const rows = result.recordset;
+    console.log(req.session.user);
 
     for (const row of rows) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "preview_img",
+        "img_preview",
         row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
@@ -105,22 +105,23 @@ app.get("/goods", async function (req, res) {
 
     res.render("index.ejs", { data: rows, user: req.session.user });
   } catch (err) {
-    console.error("Error executing MSSQL query:", err);
+    console.error("Error executing mssql query:", err);
     res.status(500).send("Internal Server Error");
   }
 });
 
 app.get("/workshop", async function (req, res) {
-  let sql = "SELECT * FROM workshop";
+  let sql = "SELECT * FROM workshops";
   try {
     const result = await pool.request().query(sql);
     const rows = result.recordset;
+    console.log(req.session.user);
 
     for (const row of rows) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "preview_img",
+        "img_preview",
         row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
@@ -129,9 +130,9 @@ app.get("/workshop", async function (req, res) {
       row.preview_image = base64Image;
     }
 
-    res.render("index.ejs", { data: rows, user: req.session.user });
+    res.render("workshop.ejs", { data: rows, user: req.session.user });
   } catch (err) {
-    console.error("Error executing MSSQL query:", err);
+    console.error("Error executing mssql query:", err);
     res.status(500).send("Internal Server Error");
   }
 });
@@ -140,7 +141,12 @@ app.get("/content/:id/:product_type", async function (req, res) {
   const productId = req.params.id;
   const productType = req.params.product_type;
 
-  let sql = `SELECT * FROM ${productType} WHERE id = @productId`;
+  let sql = `SELECT ${productType}.*, main_images.*
+  FROM ${productType}
+  JOIN main_images ON ${productType}.id = main_images.product_id
+  WHERE ${productType}.id = @productId;
+  `;
+  let sql1 = `SELECT * FROM ${productType} WHERE id = @productId`;
   let img_sql = "SELECT * FROM product_images WHERE product_id = @productId";
   try {
     const result = await pool
@@ -148,19 +154,21 @@ app.get("/content/:id/:product_type", async function (req, res) {
       .input("productId", productId)
       .query(sql);
 
+    console.log(result.recordset);
+
     const productInfo = result.recordset[0];
 
     if (productInfo) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "preview_img",
-        productInfo.preview_image,
+        "img_main",
+        productInfo.image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
       const base64Image = imageBuffer.toString("base64");
 
-      productInfo.preview_image = base64Image;
+      productInfo.image = base64Image;
 
       const imageResults = await pool
         .request()
@@ -173,7 +181,7 @@ app.get("/content/:id/:product_type", async function (req, res) {
         const imagePath = path.join(
           __dirname,
           "public",
-          "detail_img",
+          "img_detail",
           imgResults[i].image,
         );
         const imageBuffer = fs.readFileSync(imagePath);
@@ -181,20 +189,7 @@ app.get("/content/:id/:product_type", async function (req, res) {
 
         images.push(base64Image);
       }
-      const imagess = imageResults.recordset.map((image) => {
-        const imagePath = path.join(
-          __dirname,
-          "public",
-          "detail_img",
-          image.image,
-        );
-        const imageBuffer = fs.readFileSync(imagePath);
-        const base64Image = imageBuffer.toString("base64");
 
-        return {
-          image: base64Image,
-        };
-      });
       res.render("content.ejs", {
         product: productInfo,
         images: images,
@@ -267,7 +262,7 @@ app.get("/community", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "preview_img",
+        "img_preview",
         row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
@@ -281,6 +276,14 @@ app.get("/community", async function (req, res) {
     console.error("Error executing mssql query:", err);
     res.status(500).send("Internal Server Error");
   }
+});
+
+app.get("/info", function (req, res) {
+  res.render("info.ejs", { user: req.session.user });
+});
+
+app.get("/mypage", function (req, res) {
+  res.render("mypage.ejs", { user: req.session.user });
 });
 
 app.post("/signup_server", async function (req, res) {
@@ -335,39 +338,38 @@ app.post("/signin_server", async function (req, res) {
   }
 });
 
-app.post("/carts", async function (req, res) {
-  const userId = res.locals.loggedInUser.id;
-  const productId = req.body.productId;
-  const registrationDate = req.body.registrationDate;
-  const type = req.body.type;
+app.post("/cart", async function (req, res) {
+  const user = req.session.user;
 
-  let checkExistenceSql =
-    "SELECT * FROM `carts` WHERE `user_id` = @userId AND `product_id` = @productId AND `type` = @type;";
-
-  let checkExistenceParams = { userId, productId, type };
+  const quantity = req.body.quantity;
+  const get_url = req.headers.referer;
+  const product_id = get_url.split("/")[4];
+  const product_type = get_url.split("/")[5];
+  console.log("url: " + get_url);
+  console.log("product id: " + product_id);
+  let sql =
+    "INSERT INTO carts (user_id, product_id, registration_date, quantity, type) VALUES (@user_id, @product_id, GETDATE(), @quantity, @type)";
 
   try {
-    const results = await pool
+    await pool
       .request()
-      .input(checkExistenceParams)
-      .query(checkExistenceSql);
-
-    if (results.recordset.length > 0) {
-      res.status(400).send("이미 장바구니에 있는 상품입니다.");
-    } else {
-      let insertSql =
-        "INSERT INTO `carts` (`user_id`, `product_id`, `registration_date`, `type`) VALUES (@userId, @productId, @registrationDate, @type);";
-
-      let insertParams = { userId, productId, registrationDate, type };
-
-      await pool.request().input(insertParams).query(insertSql);
-
-      res.status(200).send("carts successfully");
-    }
+      .input("user_id", user.id)
+      .input("product_id", product_id)
+      .input("quantity", quantity)
+      .input("type", product_type)
+      .query(sql);
+    console.log("장바구니 추가 성공");
+    res.send('<script>alert("장바구니에 추가하였습니다.");</script>');
   } catch (err) {
-    console.error("Error checking carts existence:", err);
+    console.error("Error inserting data:", err);
     res.status(500).send("Internal Server Error");
   }
+});
+
+app.post("/buy", async function (req, res) {
+  const user = req.session.user;
+  const quantity = req.body.quantity;
+  const product_id = req.url.sqlit("/")[2];
 });
 
 app.get("/book/:type", async function (req, res) {
@@ -396,7 +398,7 @@ app.get("/book/:type", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "preview_img",
+        "img_preview",
         row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
@@ -436,7 +438,7 @@ app.get("/goods/:type", async function (req, res) {
       const imagePath = path.join(
         __dirname,
         "public",
-        "preview_img",
+        "img_preview",
         row.preview_image,
       );
       const imageBuffer = fs.readFileSync(imagePath);
@@ -479,7 +481,7 @@ app.get("/goods/:type", async function (req, res) {
 //       const imagePath = path.join(
 //         __dirname,
 //         "public",
-//         "preview_img",
+//         "img_preview",
 //         row.preview_image,
 //       );
 //       const imageBuffer = fs.readFileSync(imagePath);
@@ -650,15 +652,3 @@ const updateQuantity = async (item) => {
     throw err;
   }
 };
-
-function checkLoginStatus(req, res, next) {
-  const user = req.session.user;
-
-  if (user) {
-    res.locals.loggedInUser = user;
-  } else {
-    res.locals.loggedInUser = null;
-  }
-
-  next();
-}

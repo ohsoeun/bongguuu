@@ -1,3 +1,5 @@
+@charset "UTF-8";
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -142,128 +144,28 @@ nav div.submenu {
   font-size: 17px;
 }
 
-/* 로그인 폼 스타일 */
-.login-container {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+/*info 스타일*/
+
+.info-container {
+  margin: auto;
+  max-width: 800px;
   text-align: center;
+
+  padding: 40px; /* 여백 추가 */
 }
 
-.login-container h2 {
+h3 {
   color: #0d2645;
+  margin-top: 30px;
 }
 
-.login-container .find-buttons {
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.login-container .find-buttons a {
-  margin-inline: 3px;
-  margin-left: 10px;
-  margin-right: 10px;
-  padding: 12px;
-  width: 185px;
-  border-radius: 5px;
-  text-decoration: none;
-  background-color: #0d2645;
-  color: #fff;
-  font-size: 14px;
-}
-.login-container .find-buttons a:last-child {
-  margin-right: 0; /* 마지막 버튼에는 오른쪽 여백을 제거 */
-}
-.login-container .find-buttons a:first-child {
-  margin-left: 0; /* 첫번째 버튼에는 오른쪽 여백을 제거 */
-}
-
-.login-container .find-buttons a:hover {
-  text-decoration: underline;
-}
-
-.login-container form {
-  display: flex;
-  flex-direction: column;
-}
-
-.login-container label {
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.login-container input {
-  padding: 10px;
-  margin-bottom: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-.login-container .login-buttons {
-  display: flex;
-  flex-direction: column; /* 세로 방향으로 정렬 */
-}
-
-.login-container button {
-  padding: 12px;
-  background-color: #0d2645;
-  color: #f7f7f7;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  margin-bottom: 10px; /* 각 버튼 사이에 간격 추가 */
-}
-/* 회원가입 폼 스타일 */
-.signup-container {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.signup-container h2 {
-  text-align: center;
-  color: #333;
-}
-
-.signup-container form {
-  display: flex;
-  flex-direction: column;
-}
-
-.signup-container label {
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.signup-container input {
-  padding: 10px;
-  margin-bottom: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-.signup-container button {
-  padding: 12px;
-  background-color: #0d2645;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.info-container p {
+  line-height: 1.5;
+  color: #555;
+  border-bottom: 1px solid #0d2645;
+  padding: 30px; /* 여백 추가 */
+  border: 1px solid #ddd; /* 테두리 추가 */
+  border-radius: 10px; /* 테두리 둥글게 만들기 */
 }
 
 a {
@@ -276,6 +178,7 @@ a:hover {
   text-decoration: none;
 }
 
+/*footer */
 .footer {
   padding: 30px 0;
   font-size: 14px;
@@ -297,10 +200,12 @@ a:hover {
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center; /* 가로 중앙 정렬 */
+  align-items: center;
 }
 
 .footer-container2 p {
-  padding-left: 350px;
+  text-align: center;
   color: #f7f7f7;
 }
 

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title></title>
+    <link rel="stylesheet" href="/css/mypage_style.css" />
+  </head>
+  <body>
+    <%- include('nav.html') %>
+
+    <section id="mypage-content">
+      <div class="profile-form-container">
+        <h2>프로필</h2>
+        <!-- Edit Profile Form -->
+        <form id="edit-profile-form">
+          <label for="new-email"> ID:</label>
+          <input type="email" id="new-email" name="new-email" required />
+
+          <label for="new-email"> Password</label>
+          <input type="email" id="new-email" name="new-email" required />
+
+          <label for="new-name"> 이름:</label>
+          <input type="text" id="new-name" name="new-name" required />
+
+          <label for="new-email"> 이메일:</label>
+          <input type="email" id="new-email" name="new-email" required />
+
+          <label for="new-email"> 전화번호:</label>
+          <input type="email" id="new-email" name="new-email" required />
+
+          <label for="new-email"> 주소:</label>
+          <input type="email" id="new-email" name="new-email" required />
+        </form>
+      </div>
+
+      <div class="order-history">
+        <h2>주문 내역</h2>
+        <ul>
+          <li>주문 번호: 1234 | 도서 제목: 책 제목 1 | 가격: $20</li>
+          <li>주문 번호: 5678 | 도서 제목: 책 제목 2 | 가격: $25</li>
+          <!-- Add more order details as needed -->
+        </ul>
+      </div>
+
+      <div class="account-settings">
+        <h2>계정 설정</h2>
+
+        <a href="#" class="edit-profile-button" onclick="showEditProfileForm()"
+          >프로필 수정</a
+        >
+
+        <!-- Profile Form Container -->
+        <div id="profile-form-container" style="display: none">
+          <!-- Edit Profile Form -->
+          <form id="edit-profile-form">
+            <label for="new-username">새로운 사용자 이름:</label>
+            <input type="text" id="new-username" name="new-username" required />
+
+            <label for="new-email">새로운 이메일:</label>
+            <input type="email" id="new-email" name="new-email" required />
+
+            <!-- Edit Profile Button -->
+            <button
+              type="button"
+              class="edit-profile-button"
+              onclick="updateProfile()"
+            >
+              프로필 수정 완료
+            </button>
+          </form>
+        </div>
+
+        <!-- Change Password Button -->
+        <a
+          href="#"
+          class="edit-password-button"
+          onclick="showChangePasswordForm()"
+          >비밀번호 변경</a
+        >
+
+        <!-- Change Password Form Container -->
+        <div id="password-form-container" style="display: none">
+          <!-- Change Password Form -->
+          <form id="change-password-form">
+            <label for="current-password">현재 비밀번호:</label>
+            <input
+              type="password"
+              id="current-password"
+              name="current-password"
+              required
+            />
+
+            <label for="new-password">새로운 비밀번호:</label>
+            <input
+              type="password"
+              id="new-password"
+              name="new-password"
+              required
+            />
+
+            <label for="confirm-new-password">새로운 비밀번호 확인:</label>
+            <input
+              type="password"
+              id="confirm-new-password"
+              name="confirm-new-password"
+              required
+            />
+
+            <!-- Change Password Button -->
+            <button
+              type="button"
+              class="edit-password-button"
+              onclick="changePassword()"
+            >
+              비밀번호 변경 완료
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <%- include('bt_nav.html') %>
+    <script src="/js/script.js" defer></script>
+  </body>
+</html>

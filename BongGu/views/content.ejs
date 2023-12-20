@@ -3,33 +3,111 @@
   <head>
     <meta charset="UTF-8" />
     <title></title>
-    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/detail_style.css" />
   </head>
   <body>
     <%- include('nav.html') %>
 
-    <h1><%= product.title %> 상세 정보</h1>
-    <img
-      src="data:image/jpeg;base64,<%= product.detail_image %>"
-      alt="<%= product.title %> Preview"
-    />
-    <p>저자: <%= product.author %></p>
-    <p>상세정보: <%= product.summary %></p>
-    <p>종류: <%= product.type %></p>
-    <p>남은 수량: <%= product.remaining_quantity %></p>
-    <p>가격: <%= product.price %>원</p>
+    <div class="book-details">
+      <img
+        src="data:image/jpeg;base64,<%= product.preview_image %>"
+        alt="<%= product.title %> Preview"
+      />
+      <div class="book-info">
+        <h2><%= product.title %></h2>
+        <p>저자: <%= product.author %></p>
+        <p>가격: <%= product.price %>원</p>
+        <p>도서 소개: <%= product.summary %></p>
+        <br />
 
-    <button id="addBookMarkBtn">구매하기</button>
+        <p><strong>배송비 3,000원</strong> &nbsp | 도서산간 배송비 추가</p>
+        <p>
+          <strong>배송 안내</strong> <br />봉구택배로 발송되며 택배비는 3000원
+          ,<br />
+          50,000원 이상 구매 시 택배비가 무료입니다.
+        </p>
+
+        <div class="quantity-input">
+          <button type="button" onclick="changeQuantity(-1)">━</button>
+          <input type="text" name="quantity" value="1" readonly />
+          <button type="button" onclick="changeQuantity(1)">╋</button>
+        </div>
+        <button class="buy">구매하기</button>
+        <button class="list-buy">장바구니 담기</button>
+      </div>
+    </div>
+
+    <detail-nav>
+      <a href="#detail-images">상세정보</a>
+      <a href="#purchase-reviews">구매평</a>
+    </detail-nav>
+
+    <div class="detail-images" id="detail-images">
+      <% if (images) { %> <% for (let i = 0; i < images.length; i++) { %>
+      <img
+        src="data:image/jpeg;base64,<%= images[i] %>"
+        alt="<%= product.title %> Preview"
+      />
+      <% } %> <% } %>
+    </div>
+
+    <div class="etc">
+      <div class="one">
+        <h4>상품 결제정보</h4>
+        <p>
+          무통장 입금시 입금 확인 후 배송됩니다. 금액은 직접 입금하시면
+          됩니다.<br /><br />
+
+          주문시 입력한 입금자명과 실제입금자의 성명이 반드시 일치하여야 하며,
+          일치하지 않을 경우 따로 말씀해주세요
+        </p>
+      </div>
+      <div class="two">
+        <h4>환불정보</h4>
+        <p>
+          봉구에서 구매한 제품을 환불 또는 교환원하시는 분들은 상품수령 후 7일
+          이내 고객센터 문의 주세요<br /><br />
+
+          단, 제품은 뜯어져 있거나 고객에 의해 훼손된 경우에는 교환 및 환불이
+          불가합니다.<br /><br />
+
+          받아보신 후에 인쇄 사고나 재단 등 제작이 잘못되었을 경우 환불이
+          가능합니다.<br /><br />
+
+          ※ 고객님의 마음이 바뀌어 교환, 반품을 하실 경우 환불이 불가합니다.
+          신중히 구매해주세요.
+        </p>
+      </div>
+    </div>
+
+    <div class="purchase-reviews" id="purchase-reviews">
+      <h2>구매평</h2>
+
+      <!-- 구매평 -->
+      <div class="review">
+        <p>등록된 구매평이 없습니다.</p>
+      </div>
+      <!-- 구매평 작성 버튼 -->
+      <button class="write-review-btn" onclick="toggleReviewForm()">
+        구매평 작성
+      </button>
+
+      <!-- 구매평 작성 폼 -->
+      <div class="review-form" id="review-form">
+        <textarea placeholder="구매평을 작성해주세요..."></textarea>
+        <button class="submit-btn">작성 완료</button>
+      </div>
+    </div>
 
     <footer></footer>
     <script src="/js/script.js" defer></script>
     <script>
-      const user = "<%= userName %>";
-      const bookMarkBtn = document.getElementById("addBookMarkBtn");
+      const user = "<%= user %>";
+      const cartBtn = document.getElementById("addCartBtn");
 
-      bookMarkBtn.addEventListener("click", addBookMark);
+      cartBtn.addEventListener("click", addCart);
 
-      function addBookMark() {
+      function addCart() {
         if (user) {
           const productId = "<%= product.id %>";
           const currentDate = new Date();
@@ -40,7 +118,7 @@
           const type = "<%= product.product_type %>";
           const xhr = new XMLHttpRequest();
 
-          xhr.open("POST", "/bookmark", true);
+          xhr.open("POST", "/carts", true);
           xhr.setRequestHeader("Content-Type", "application/json");
 
           xhr.onreadystatechange = function () {
@@ -61,4 +139,5 @@
       }
     </script>
   </body>
+  <%- include('bt_nav.html') %>
 </html>

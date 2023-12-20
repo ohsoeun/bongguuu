@@ -15,8 +15,7 @@ CREATE TABLE books (
     title VARCHAR(255) NOT NULL,
     author VARCHAR(255) NOT NULL,
     summary TEXT NOT NULL,
-    detailed_image_uri VARCHAR(255) NOT NULL,
-    preview_image_uri VARCHAR(255) NOT NULL,
+    preview_image VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     remaining_quantity INT NOT NULL,
@@ -24,12 +23,11 @@ CREATE TABLE books (
 );
 
 CREATE TABLE goods (
-    id INT PRIMARY KEY IDENTITY(1,1),
+    id INT PRIMARY KEY IDENTITY(50001,1),
     title VARCHAR(255) NOT NULL,
     author VARCHAR(255) NOT NULL,
     summary TEXT NOT NULL,
-    detailed_image_uri VARCHAR(255) NOT NULL,
-    preview_image_uri VARCHAR(255) NOT NULL,
+    preview_image VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     remaining_quantity INT NOT NULL,
@@ -37,16 +35,26 @@ CREATE TABLE goods (
 );
 
 CREATE TABLE workshops (
-    id INT PRIMARY KEY IDENTITY(1,1),
+    id INT PRIMARY KEY IDENTITY(100001,1),
     title VARCHAR(255) NOT NULL,
     author VARCHAR(255) NOT NULL,
     summary TEXT NOT NULL,
-    detailed_image_uri VARCHAR(255) NOT NULL,
-    preview_image_uri VARCHAR(255) NOT NULL,
+    preview_image VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     remaining_quantity INT NOT NULL,
-    product_type VARCHAR(45) NOT NULL DEFAULT 'workshops'
+    product_type VARCHAR(45) NOT NULL DEFAULT 'workshops',
+    date date NOT NULL
+);
+
+CREATE TABLE carts (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    user_id VARCHAR(255) NOT NULL,
+    product_id INT NOT NULL,
+    registration_date DATE NOT NULL,
+    quantity INT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 );
 
 CREATE TABLE bookmarks (
@@ -55,23 +63,38 @@ CREATE TABLE bookmarks (
     product_id INT NOT NULL,
     registration_date DATE NOT NULL,
     type VARCHAR(50) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 );
-
+	
 CREATE TABLE purchase_history (
     id INT PRIMARY KEY IDENTITY(1,1),
     user_id VARCHAR(255) NOT NULL,
     product_id INT NOT NULL,
     purchase_date DATE NOT NULL,
     type VARCHAR(50) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 );
 
 CREATE TABLE reviews (
     id INT PRIMARY KEY IDENTITY(1,1),
     user_id VARCHAR(255) NOT NULL,
     product_id INT NOT NULL,
-    review_text TEXT NOT NULL,
+    review TEXT NOT NULL,
     type VARCHAR(50) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+);
+
+CREATE TABLE community (
+    id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    title VARCHAR(50) NOT NULL,
+    contents VARCHAR(MAX) NOT NULL,
+    writer VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    regdate DATETIME NOT NULL,
+    hit INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE product_images (
+    id INT PRIMARY KEY IDENTITY(1,1),
+    product_id INT NOT NULL,
+    image VARCHAR(255) NOT NULL,
 );

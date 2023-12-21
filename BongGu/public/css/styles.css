@@ -221,11 +221,13 @@ a:hover {
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center; /* 가로 중앙 정렬 */
+  align-items: center;
 }
 
 .footer-container2 p {
-  padding-left: 350px;
   color: #f7f7f7;
+  text-align: center;
 }
 
 .footer-container2 a {

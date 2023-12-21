@@ -72,7 +72,8 @@
       <div class="order-history">
         <h2>주문 내역</h2>
         <ul>
-          <% for(let i = 0; i < user.purchase_history.length; i++) { %>
+          <% if (user.purchase_history) { %> <% for(let i = 0; i <
+          user.purchase_history.length; i++) { %>
           <li>
             상품 제목: <%= user.purchase_history[i].product_title %> | 구매
             날짜: <%=
@@ -81,7 +82,7 @@
             user.purchase_history[i].price ?
             `${user.purchase_history[i].price}원` : '가격 정보 없음' %>
           </li>
-          <% } %>
+          <% } %> <% } %>
         </ul>
       </div>
 

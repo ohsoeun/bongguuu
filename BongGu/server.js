@@ -111,7 +111,10 @@ app.get("/goods", async function (req, res) {
 });
 
 app.get("/workshop", async function (req, res) {
-  let sql = "SELECT * FROM workshops";
+  let sql = `SELECT *
+  FROM workshops
+  WHERE date >= GETDATE();
+  `;
   try {
     const result = await pool.request().query(sql);
     const rows = result.recordset;
@@ -361,11 +364,11 @@ app.post("/signup_server", async function (req, res) {
       .input("phone", req.body.phone)
       .query(sql);
     console.log("데이터 추가 성공");
+    res.redirect("/login");
   } catch (err) {
     console.error("Error inserting data:", err);
     res.status(500).send("Internal Server Error");
   }
-  res.redirect("/");
 });
 
 app.post("/signin_server", async function (req, res) {
